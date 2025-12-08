@@ -6,11 +6,13 @@ import { Conversations } from "./modules/conversations";
 import { Analytics } from "./modules/analytics";
 import { Training } from "./modules/training";
 import { Settings } from "./modules/settings";
+import { Login } from "./modules/auth";
 import { MobileMenuOverlay } from "./components/layout";
 
 type Page = "dashboard" | "conversations" | "analytics" | "training" | "settings";
 
 export default function App() {
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [currentPage, setCurrentPage] = useState<Page>("dashboard");
 
@@ -57,6 +59,11 @@ export default function App() {
     console.log("--admin-text computed value:", textValue);
     console.log("Current page:", currentPage);
   });
+
+  // Show login screen if not authenticated
+  if (!isAuthenticated) {
+    return <Login onLoginSuccess={() => setIsAuthenticated(true)} />;
+  }
 
   return (
     <div className="min-h-screen flex bg-[var(--admin-bg)] text-[var(--admin-text)]">

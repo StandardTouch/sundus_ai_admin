@@ -116,9 +116,9 @@ html.dark {
   --admin-primary-light: #3b82f6; /* lighter blue */
   --admin-primary-dark: #1e40af; /* darker blue */
   --admin-primary-darker: #1e3a8a; /* darkest blue */
-  --admin-secondary: #2C598A; /* secondary uses primary */
-  --admin-secondary-light: #3b82f6; /* lighter secondary */
-  --admin-secondary-dark: #1e40af; /* darker secondary */
+  --admin-secondary: #08203C; /* secondary color for login background */
+  --admin-secondary-light: #0a2a4a; /* lighter secondary */
+  --admin-secondary-dark: #061a2e; /* darker secondary */
   --admin-accent-cyan: #06b6d4; /* cyan accent */
   --admin-accent-pink: #ec4899; /* pink accent */
   --admin-accent-green: #16a34a; /* green accent */
@@ -174,9 +174,9 @@ html.dark,
   --admin-primary-light: #3b82f6 !important; /* lighter blue */
   --admin-primary-dark: #1e40af !important; /* darker blue */
   --admin-primary-darker: #1e3a8a !important; /* darkest blue */
-  --admin-secondary: #2C598A !important; /* secondary uses primary */
-  --admin-secondary-light: #3b82f6 !important; /* lighter secondary */
-  --admin-secondary-dark: #1e40af !important; /* darker secondary */
+  --admin-secondary: #08203C !important; /* secondary color for login background */
+  --admin-secondary-light: #0a2a4a !important; /* lighter secondary */
+  --admin-secondary-dark: #061a2e !important; /* darker secondary */
   --admin-accent-cyan: #06b6d4 !important; /* cyan accent */
   --admin-accent-pink: #ec4899 !important; /* pink accent */
   --admin-accent-green: #16a34a !important; /* green accent */
