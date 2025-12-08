@@ -8,7 +8,7 @@ export interface SidebarItemConfig {
 }
 
 export const sidebarItems: SidebarItemConfig[] = [
-  { icon: BarChart3, label: "Dashboard", path: "/" },
+  { icon: BarChart3, label: "Dashboard", path: "/dashboard" },
   { icon: MessageSquare, label: "Conversations", path: "/conversations" },
   { icon: LineChart, label: "Analytics", path: "/analytics" },
   { icon: Users, label: "Training", path: "/training" },

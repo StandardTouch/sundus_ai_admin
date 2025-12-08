@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
 import { LoginLogo, LoginForm, ForgotPasswordForm, NewPasswordForm } from "../components";
 
 interface LoginProps {
@@ -6,19 +7,30 @@ interface LoginProps {
 }
 
 export default function Login({ onLoginSuccess }: LoginProps) {
+  const navigate = useNavigate();
+  const location = useLocation();
   const [showForgotPassword, setShowForgotPassword] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [emailForReset, setEmailForReset] = useState("");
 
+  // Check if we're on forgot password route
+  useEffect(() => {
+    if (location.pathname === "/forgot-password") {
+      setShowForgotPassword(true);
+    }
+  }, [location.pathname]);
+
   const handleForgotPassword = (email: string) => {
     setEmailForReset(email);
     setShowForgotPassword(true);
+    navigate("/forgot-password", { replace: true });
   };
 
   const handleOtpVerified = (email: string) => {
     setEmailForReset(email);
     setShowForgotPassword(false);
     setShowNewPassword(true);
+    navigate("/forgot-password/new-password", { replace: true });
   };
 
   const handleNewPasswordSubmit = (email: string, password: string) => {
@@ -27,19 +39,30 @@ export default function Login({ onLoginSuccess }: LoginProps) {
     alert(`Password updated successfully for ${email}`);
     setShowNewPassword(false);
     setEmailForReset("");
+    navigate("/login", { replace: true });
   };
 
   const handleCancelForgotPassword = () => {
     setShowForgotPassword(false);
     setEmailForReset("");
+    navigate("/login", { replace: true });
   };
 
   const handleCancelNewPassword = () => {
     setShowNewPassword(false);
     setEmailForReset("");
+    navigate("/login", { replace: true });
   };
 
-  if (showNewPassword) {
+  const handleLoginSuccess = () => {
+    localStorage.setItem("isAuthenticated", "true");
+    if (onLoginSuccess) {
+      onLoginSuccess();
+    }
+    navigate("/dashboard", { replace: true });
+  };
+
+  if (showNewPassword || location.pathname === "/forgot-password/new-password") {
     return (
       <NewPasswordForm
         email={emailForReset}
@@ -49,7 +72,7 @@ export default function Login({ onLoginSuccess }: LoginProps) {
     );
   }
 
-  if (showForgotPassword) {
+  if (showForgotPassword || location.pathname === "/forgot-password") {
     return (
       <ForgotPasswordForm
         initialEmail={emailForReset}
@@ -66,7 +89,7 @@ export default function Login({ onLoginSuccess }: LoginProps) {
 
       {/* Right Side - Login Form (Always White) */}
       <LoginForm
-        onLoginSuccess={onLoginSuccess}
+        onLoginSuccess={handleLoginSuccess}
         onForgotPassword={handleForgotPassword}
       />
     </div>

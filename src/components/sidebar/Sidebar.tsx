@@ -1,4 +1,5 @@
 import { UserCircle, X } from "lucide-react";
+import { Link, useLocation } from "react-router-dom";
 import SidebarItem from "./SidebarItem";
 import { sidebarItems } from "./sidebarConfig";
 import { useTheme } from "@/contexts/ThemeContext";
@@ -9,26 +10,24 @@ interface SidebarProps {
   isOpen: boolean;
   onClose: () => void;
   currentPage: Page;
-  onPageChange: (page: Page) => void;
 }
 
-export default function Sidebar({ isOpen, onClose, currentPage, onPageChange }: SidebarProps) {
+export default function Sidebar({ isOpen, onClose, currentPage }: SidebarProps) {
   const { theme } = useTheme();
+  const location = useLocation();
   const logoSrc = theme === "dark" ? "/logo_dark.png" : "/logo_light.png";
 
-  const handleItemClick = (label: string) => {
-    const pageMap: Record<string, Page> = {
-      "Dashboard": "dashboard",
-      "Conversations": "conversations",
-      "Analytics": "analytics",
-      "Training": "training",
-      "Settings": "settings",
-    };
-    const page = pageMap[label] as Page;
-    if (page) {
-      onPageChange(page);
-    }
+  const getCurrentPage = (): Page => {
+    const path = location.pathname;
+    if (path === "/" || path === "/dashboard") return "dashboard";
+    if (path === "/conversations") return "conversations";
+    if (path === "/analytics") return "analytics";
+    if (path === "/training") return "training";
+    if (path === "/settings") return "settings";
+    return "dashboard";
   };
+
+  const activePage = getCurrentPage();
 
   return (
     <aside
@@ -41,13 +40,13 @@ export default function Sidebar({ isOpen, onClose, currentPage, onPageChange }: 
     >
       <div>
         <div className="flex items-center justify-between mb-10 relative">
-          <div className="flex items-center justify-center w-full">
+          <Link to="/dashboard" className="flex items-center justify-center w-full">
             <img 
               src={logoSrc} 
               alt="Logo" 
               className="w-full h-auto"
             />
-          </div>
+          </Link>
           <button
             onClick={onClose}
             className="lg:hidden text-[var(--admin-text-muted)] hover:text-[var(--admin-text)] absolute top-0 right-0 cursor-pointer"
@@ -67,26 +66,37 @@ export default function Sidebar({ isOpen, onClose, currentPage, onPageChange }: 
               "Settings": "settings",
             };
             const itemPage = pageMap[item.label] as Page;
+            const path = item.path || "/";
             return (
-              <SidebarItem 
-                key={i} 
-                {...item} 
-                onClick={() => handleItemClick(item.label)}
-                isActive={currentPage === itemPage}
-              />
+              <Link key={i} to={path} onClick={onClose}>
+                <SidebarItem 
+                  {...item} 
+                  isActive={activePage === itemPage}
+                />
+              </Link>
             );
           })}
         </nav>
       </div>
 
-      <div className="border-t border-[var(--admin-border)] pt-4 flex items-center gap-3">
-        <UserCircle className="w-8 h-8 text-[var(--admin-text-muted)]" />
-        <div>
-          <p className="font-semibold text-[var(--admin-text)]">Admin User</p>
-          <p className="text-xs text-[var(--admin-text-dim)]">admin@chatbot.ai</p>
+      <div className="border-t border-[var(--admin-border)] pt-4">
+        <div className="flex items-center gap-3 mb-3">
+          <UserCircle className="w-8 h-8 text-[var(--admin-text-muted)]" />
+          <div>
+            <p className="font-semibold text-[var(--admin-text)]">Admin User</p>
+            <p className="text-xs text-[var(--admin-text-dim)]">admin@chatbot.ai</p>
+          </div>
         </div>
+        <button
+          onClick={() => {
+            localStorage.removeItem("isAuthenticated");
+            window.location.href = "/login";
+          }}
+          className="w-full px-3 py-2 text-sm text-[var(--admin-text-muted)] hover:text-[var(--admin-text)] hover:bg-[var(--admin-border)] rounded-lg transition-all cursor-pointer"
+        >
+          Logout
+        </button>
       </div>
     </aside>
   );
 }
-
