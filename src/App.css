@@ -3,6 +3,11 @@
 
 @custom-variant dark (&:is(.dark *));
 
+/* Ensure dark mode variables are applied to root */
+html.dark {
+  color-scheme: dark;
+}
+
 @theme inline {
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
@@ -39,6 +44,29 @@
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-ring: var(--sidebar-ring);
+  
+  /* WhatsApp AI Admin Theme Colors */
+  --color-admin-bg: var(--admin-bg);
+  --color-admin-bg-secondary: var(--admin-bg-secondary);
+  --color-admin-text: var(--admin-text);
+  --color-admin-text-secondary: var(--admin-text-secondary);
+  --color-admin-text-muted: var(--admin-text-muted);
+  --color-admin-text-dim: var(--admin-text-dim);
+  --color-admin-border: var(--admin-border);
+  --color-admin-border-light: var(--admin-border-light);
+  --color-admin-primary: var(--admin-primary);
+  --color-admin-primary-light: var(--admin-primary-light);
+  --color-admin-primary-dark: var(--admin-primary-dark);
+  --color-admin-primary-darker: var(--admin-primary-darker);
+  --color-admin-secondary: var(--admin-secondary);
+  --color-admin-secondary-light: var(--admin-secondary-light);
+  --color-admin-secondary-dark: var(--admin-secondary-dark);
+  --color-admin-accent-cyan: var(--admin-accent-cyan);
+  --color-admin-accent-pink: var(--admin-accent-pink);
+  --color-admin-accent-green: var(--admin-accent-green);
+  --color-admin-accent-emerald: var(--admin-accent-emerald);
+  --color-admin-accent-yellow: var(--admin-accent-yellow);
+  --color-admin-accent-orange: var(--admin-accent-orange);
 }
 
 :root {
@@ -74,8 +102,32 @@
   --sidebar-accent-foreground: oklch(0.205 0 0);
   --sidebar-border: oklch(0.922 0 0);
   --sidebar-ring: oklch(0.708 0 0);
+  
+  /* WhatsApp AI Admin Theme - Light Mode (based on logo colors) */
+  --admin-bg: #ffffff; /* white background to match logo_light.png */
+  --admin-bg-secondary: #f8fafc; /* light gray background for cards */
+  --admin-text: #09213C; /* dark blue from logo */
+  --admin-text-secondary: #1e293b; /* darker text */
+  --admin-text-muted: #64748b; /* muted text */
+  --admin-text-dim: #94a3b8; /* dim text */
+  --admin-border: #e2e8f0; /* light border */
+  --admin-border-light: #cbd5e1; /* lighter border */
+  --admin-primary: #2C598A; /* primary blue from logo */
+  --admin-primary-light: #3b82f6; /* lighter blue */
+  --admin-primary-dark: #1e40af; /* darker blue */
+  --admin-primary-darker: #1e3a8a; /* darkest blue */
+  --admin-secondary: #2C598A; /* secondary uses primary */
+  --admin-secondary-light: #3b82f6; /* lighter secondary */
+  --admin-secondary-dark: #1e40af; /* darker secondary */
+  --admin-accent-cyan: #06b6d4; /* cyan accent */
+  --admin-accent-pink: #ec4899; /* pink accent */
+  --admin-accent-green: #16a34a; /* green accent */
+  --admin-accent-emerald: #10b981; /* emerald accent */
+  --admin-accent-yellow: #facc15; /* yellow accent */
+  --admin-accent-orange: #fb923c; /* orange accent */
 }
 
+html.dark,
 .dark {
   --background: oklch(0.145 0 0);
   --foreground: oklch(0.985 0 0);
@@ -108,6 +160,29 @@
   --sidebar-accent-foreground: oklch(0.985 0 0);
   --sidebar-border: oklch(1 0 0 / 10%);
   --sidebar-ring: oklch(0.556 0 0);
+  
+  /* WhatsApp AI Admin Theme - Dark Mode (based on logo colors) */
+  --admin-bg: #000000 !important; /* black background to match logo_dark.png */
+  --admin-bg-secondary: #0a0a0a !important; /* slightly lighter black for cards */
+  --admin-text: #ffffff !important; /* white text */
+  --admin-text-secondary: #e2e8f0 !important; /* light gray text */
+  --admin-text-muted: #cbd5e1 !important; /* muted text */
+  --admin-text-dim: #94a3b8 !important; /* dim text */
+  --admin-border: #1e293b !important; /* dark border */
+  --admin-border-light: #334155 !important; /* lighter border */
+  --admin-primary: #2C598A !important; /* primary blue from logo */
+  --admin-primary-light: #3b82f6 !important; /* lighter blue */
+  --admin-primary-dark: #1e40af !important; /* darker blue */
+  --admin-primary-darker: #1e3a8a !important; /* darkest blue */
+  --admin-secondary: #2C598A !important; /* secondary uses primary */
+  --admin-secondary-light: #3b82f6 !important; /* lighter secondary */
+  --admin-secondary-dark: #1e40af !important; /* darker secondary */
+  --admin-accent-cyan: #06b6d4 !important; /* cyan accent */
+  --admin-accent-pink: #ec4899 !important; /* pink accent */
+  --admin-accent-green: #16a34a !important; /* green accent */
+  --admin-accent-emerald: #10b981 !important; /* emerald accent */
+  --admin-accent-yellow: #facc15 !important; /* yellow accent */
+  --admin-accent-orange: #fb923c !important; /* orange accent */
 }
 
 @layer base {
@@ -116,5 +191,12 @@
   }
   body {
     @apply bg-background text-foreground;
+  }
+}
+
+/* Mobile responsive utilities */
+@media (max-width: 768px) {
+  .mobile-hidden {
+    display: none;
   }
 }
