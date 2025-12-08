@@ -1,17 +1,18 @@
+import { useEffect, useMemo } from "react";
 import { useFormik } from "formik";
 import * as Yup from "yup";
+import { useNavigate } from "react-router-dom";
 import { ArrowRight } from "lucide-react";
 import ThemeToggle from "@/components/theme/ThemeToggle";
 import LoginLogo from "./LoginLogo";
-import EmailField from "./EmailField";
 import PasswordField from "./PasswordField";
+import { useAppDispatch, useAppSelector } from "@/store/hooks";
+import { loginUser, updateLoginForm, clearLoginError } from "@/store/slices/authSlice";
 
 const loginSchema = Yup.object().shape({
-  email: Yup.string()
-    .email("Invalid email address")
-    .required("Email is required"),
+  username: Yup.string()
+    .required("Username is required"),
   password: Yup.string()
-    .min(6, "Password must be at least 6 characters")
     .required("Password is required"),
 });
 
@@ -21,21 +22,65 @@ interface LoginFormProps {
 }
 
 export default function LoginForm({ onLoginSuccess, onForgotPassword }: LoginFormProps) {
-  const formik = useFormik({
-    initialValues: {
-      email: "",
-      password: "",
-    },
-    validationSchema: loginSchema,
-    onSubmit: async (values) => {
-      console.log("Login attempt:", values);
-      // TODO: Add actual login API call here
-      // For now, just simulate success
+  const navigate = useNavigate();
+  const dispatch = useAppDispatch();
+  
+  // Get form state from Redux
+  const { username, password, error: loginError, isSubmitting } = useAppSelector(
+    (state) => state.auth.loginForm
+  );
+  const { isAuthenticated } = useAppSelector((state) => state.auth);
+
+  // Navigate to dashboard on successful login
+  useEffect(() => {
+    if (isAuthenticated) {
       if (onLoginSuccess) {
         onLoginSuccess();
       }
+      navigate("/dashboard", { replace: true });
+    }
+  }, [isAuthenticated, navigate, onLoginSuccess]);
+
+  // Memoize initial values so enableReinitialize works properly
+  const initialValues = useMemo(() => ({
+    username: username || "",
+    password: password || "",
+  }), [username, password]);
+
+  const formik = useFormik({
+    initialValues,
+    validationSchema: loginSchema,
+    enableReinitialize: true, // Allow reinitialize from Redux state - this keeps form values in sync
+    onSubmit: async (values, { setSubmitting }) => {
+      // Update Redux with form values BEFORE login attempt to ensure they persist on error
+      dispatch(updateLoginForm({ field: "username", value: values.username }));
+      dispatch(updateLoginForm({ field: "password", value: values.password }));
+      dispatch(clearLoginError());
+      
+      try {
+        await dispatch(loginUser({
+          username: values.username,
+          password: values.password,
+        })).unwrap();
+      } catch (error) {
+        // Error is already handled by Redux slice
+        // Form values are preserved in Redux state
+      } finally {
+        setSubmitting(false);
+      }
     },
   });
+
+  // Update Redux when form values change
+  const handleUsernameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    formik.handleChange(e);
+    dispatch(updateLoginForm({ field: "username", value: e.target.value }));
+  };
+
+  const handlePasswordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    formik.handleChange(e);
+    dispatch(updateLoginForm({ field: "password", value: e.target.value }));
+  };
 
   // Both modes: secondary color background with white text
   const bgColor = "bg-[var(--admin-secondary)]";
@@ -62,24 +107,45 @@ export default function LoginForm({ onLoginSuccess, onForgotPassword }: LoginFor
           Sign in to your account to continue
         </p>
 
-        <form onSubmit={formik.handleSubmit} className="space-y-5">
-          {/* Email Field */}
-          <EmailField
-            id="email"
-            name="email"
-            value={formik.values.email}
-            onChange={formik.handleChange}
-            onBlur={formik.handleBlur}
-            error={formik.errors.email}
-            touched={formik.touched.email}
-          />
+        {loginError && (
+          <div className="mb-4 p-3 bg-red-500/10 border border-red-500/20 rounded-lg">
+            <p className="text-sm text-red-400">{loginError}</p>
+          </div>
+        )}
+
+        <form onSubmit={formik.handleSubmit} className="space-y-5" noValidate>
+          {/* Username Field */}
+          <div>
+            <label htmlFor="username" className="block text-sm font-medium text-white mb-2">
+              Username
+            </label>
+            <div className="relative">
+              <input
+                id="username"
+                name="username"
+                type="text"
+                value={formik.values.username}
+                onChange={handleUsernameChange}
+                onBlur={formik.handleBlur}
+                className={`w-full pl-4 pr-4 py-2.5 bg-white/10 border rounded-lg text-white placeholder:text-white/60 focus:outline-none focus:ring-2 transition-all ${
+                  formik.touched.username && formik.errors.username
+                    ? "border-red-500 focus:ring-red-500"
+                    : "border-white/20 focus:ring-white/50"
+                }`}
+                placeholder="Enter your username"
+              />
+            </div>
+            {formik.touched.username && formik.errors.username && (
+              <p className="mt-1 text-sm text-red-400">{formik.errors.username}</p>
+            )}
+          </div>
 
           {/* Password Field */}
           <PasswordField
             id="password"
             name="password"
             value={formik.values.password}
-            onChange={formik.handleChange}
+            onChange={handlePasswordChange}
             onBlur={formik.handleBlur}
             error={formik.errors.password}
             touched={formik.touched.password}
@@ -89,7 +155,7 @@ export default function LoginForm({ onLoginSuccess, onForgotPassword }: LoginFor
           <div className="flex justify-end">
             <button
               type="button"
-              onClick={() => onForgotPassword(formik.values.email)}
+              onClick={() => onForgotPassword(formik.values.username)}
               className="text-sm text-white/90 hover:text-white transition-colors cursor-pointer"
             >
               Forgot password?
@@ -99,10 +165,10 @@ export default function LoginForm({ onLoginSuccess, onForgotPassword }: LoginFor
           {/* Submit Button */}
           <button
             type="submit"
-            disabled={formik.isSubmitting}
+            disabled={isSubmitting}
             className="w-full px-4 py-2.5 bg-white text-[var(--admin-secondary)] rounded-lg hover:bg-white/90 transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed font-medium flex items-center justify-center gap-2"
           >
-            {formik.isSubmitting ? (
+            {isSubmitting ? (
               "Signing in..."
             ) : (
               <>

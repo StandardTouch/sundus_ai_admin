@@ -1,9 +1,11 @@
+import { useState } from "react";
 import { useFormik } from "formik";
 import * as Yup from "yup";
 import { ArrowRight } from "lucide-react";
 import ThemeToggle from "@/components/theme/ThemeToggle";
 import LoginLogo from "./LoginLogo";
 import PasswordField from "./PasswordField";
+import { resetPassword } from "@/lib/api/auth";
 
 const passwordSchema = Yup.object().shape({
   password: Yup.string()
@@ -17,18 +19,55 @@ const passwordSchema = Yup.object().shape({
 interface NewPasswordFormProps {
   email: string;
   onCancel: () => void;
-  onSubmit: (email: string, password: string) => void;
+  onSubmit: (password: string) => void;
 }
 
 export default function NewPasswordForm({ email, onCancel, onSubmit }: NewPasswordFormProps) {
+  const [error, setError] = useState<string>("");
+
   const formik = useFormik({
     initialValues: {
       password: "",
       confirmPassword: "",
     },
     validationSchema: passwordSchema,
-    onSubmit: (values) => {
-      onSubmit(email, values.password);
+    onSubmit: async (values, { setSubmitting }) => {
+      try {
+        setError("");
+        // Get reset token from localStorage
+        const resetToken = localStorage.getItem("resetToken");
+        
+        if (!resetToken) {
+          setError("Reset token not found. Please start the password reset process again.");
+          return;
+        }
+
+        const response = await resetPassword(resetToken, values.password);
+        if (response.success) {
+          // Clear reset token after successful password reset
+          localStorage.removeItem("resetToken");
+          onSubmit(values.password);
+        }
+      } catch (error: any) {
+        // Handle specific error status codes
+        const status = error.response?.status;
+        let errorMessage = "Failed to reset password. Please try again.";
+        
+        if (status === 400) {
+          // Multiple 400 error cases
+          errorMessage = error.response?.data?.error || "Invalid reset token or password";
+        } else if (status === 404) {
+          errorMessage = error.response?.data?.error || "User not found";
+        } else if (status === 500) {
+          errorMessage = error.response?.data?.error || "Internal server error. Please try again later.";
+        } else {
+          errorMessage = error.response?.data?.error || error.message || errorMessage;
+        }
+        
+        setError(errorMessage);
+      } finally {
+        setSubmitting(false);
+      }
     },
   });
 
@@ -56,6 +95,11 @@ export default function NewPasswordForm({ email, onCancel, onSubmit }: NewPasswo
               Enter your new password below.
             </p>
           </div>
+          {error && (
+            <div className="mb-4 p-3 bg-red-500/10 border border-red-500/20 rounded-lg">
+              <p className="text-sm text-red-400">{error}</p>
+            </div>
+          )}
           <form onSubmit={formik.handleSubmit} className="space-y-5">
             <PasswordField
               id="new-password"

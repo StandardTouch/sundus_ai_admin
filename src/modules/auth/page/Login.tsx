@@ -26,17 +26,16 @@ export default function Login({ onLoginSuccess }: LoginProps) {
     navigate("/forgot-password", { replace: true });
   };
 
-  const handleOtpVerified = (email: string) => {
+  const handleOtpVerified = (email: string, _resetToken: string) => {
     setEmailForReset(email);
+    // Reset token is already stored in localStorage by ForgotPasswordForm
     setShowForgotPassword(false);
     setShowNewPassword(true);
     navigate("/forgot-password/new-password", { replace: true });
   };
 
-  const handleNewPasswordSubmit = (email: string, password: string) => {
-    console.log("New password set for:", email, "Password length:", password.length);
-    // TODO: Add API call to update password
-    alert(`Password updated successfully for ${email}`);
+  const handleNewPasswordSubmit = (password: string) => {
+    console.log("Password reset successful");
     setShowNewPassword(false);
     setEmailForReset("");
     navigate("/login", { replace: true });
@@ -45,12 +44,16 @@ export default function Login({ onLoginSuccess }: LoginProps) {
   const handleCancelForgotPassword = () => {
     setShowForgotPassword(false);
     setEmailForReset("");
+    // Clear any reset token if user cancels
+    localStorage.removeItem("resetToken");
     navigate("/login", { replace: true });
   };
 
   const handleCancelNewPassword = () => {
     setShowNewPassword(false);
     setEmailForReset("");
+    // Clear reset token when canceling
+    localStorage.removeItem("resetToken");
     navigate("/login", { replace: true });
   };
 

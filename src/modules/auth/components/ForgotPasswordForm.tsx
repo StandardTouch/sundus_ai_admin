@@ -6,6 +6,7 @@ import ThemeToggle from "@/components/theme/ThemeToggle";
 import LoginLogo from "./LoginLogo";
 import EmailField from "./EmailField";
 import OtpInput from "./OtpInput";
+import { sendOtp, verifyOtp } from "@/lib/api/auth";
 
 const emailSchema = Yup.object().shape({
   email: Yup.string()
@@ -16,7 +17,7 @@ const emailSchema = Yup.object().shape({
 interface ForgotPasswordFormProps {
   initialEmail?: string;
   onCancel: () => void;
-  onOtpSent: (email: string) => void;
+  onOtpSent: (email: string, resetToken: string) => void;
 }
 
 export default function ForgotPasswordForm({ initialEmail = "", onCancel, onOtpSent }: ForgotPasswordFormProps) {
@@ -30,38 +31,89 @@ export default function ForgotPasswordForm({ initialEmail = "", onCancel, onOtpS
       email: initialEmail,
     },
     validationSchema: emailSchema,
-    onSubmit: async (values) => {
-      setEmail(values.email);
-      // TODO: Add API call to send OTP
-      console.log("Sending OTP to:", values.email);
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-      setIsOtpSent(true);
-      setStep("otp");
+    onSubmit: async (values, { setSubmitting, setFieldError }) => {
+      try {
+        setEmail(values.email);
+        setOtpError("");
+        const response = await sendOtp(values.email);
+        if (response.success) {
+          setIsOtpSent(true);
+          setStep("otp");
+        }
+      } catch (error: any) {
+        // Handle specific error status codes
+        const status = error.response?.status;
+        let errorMessage = "Failed to send OTP. Please try again.";
+        
+        if (status === 400) {
+          errorMessage = error.response?.data?.error || "Email is required";
+        } else if (status === 404) {
+          errorMessage = error.response?.data?.error || "User not found";
+        } else if (status === 429) {
+          errorMessage = error.response?.data?.error || "Too many requests. Please try again later";
+        } else {
+          errorMessage = error.response?.data?.error || error.message || errorMessage;
+        }
+        
+        setFieldError("email", errorMessage);
+      } finally {
+        setSubmitting(false);
+      }
     },
   });
 
   const handleOtpComplete = async (otp: string) => {
-    setOtpError("");
-    // TODO: Add API call to verify OTP
-    console.log("Verifying OTP:", otp, "for email:", email);
-    // Simulate API call
-    await new Promise((resolve) => setTimeout(resolve, 1000));
-    
-    // For now, accept any 6-digit OTP (replace with actual verification)
-    if (otp.length === 6) {
-      onOtpSent(email);
-    } else {
-      setOtpError("Invalid OTP. Please try again.");
+    try {
+      setOtpError("");
+      const response = await verifyOtp(email, otp);
+      if (response.success && response.reset_token) {
+        // Store reset token temporarily for password reset
+        localStorage.setItem("resetToken", response.reset_token);
+        onOtpSent(email, response.reset_token);
+      } else {
+        setOtpError("OTP verification failed. Please try again.");
+      }
+    } catch (error: any) {
+      // Handle specific error status codes
+      const status = error.response?.status;
+      let errorMessage = "Invalid OTP. Please try again.";
+      
+      if (status === 400) {
+        errorMessage = error.response?.data?.error || "Invalid or expired OTP";
+      } else if (status === 500) {
+        errorMessage = error.response?.data?.error || "Internal server error. Please try again later.";
+      } else {
+        errorMessage = error.response?.data?.error || error.message || errorMessage;
+      }
+      
+      setOtpError(errorMessage);
     }
   };
 
   const handleResendOtp = async () => {
-    setOtpError("");
-    // TODO: Add API call to resend OTP
-    console.log("Resending OTP to:", email);
-    await new Promise((resolve) => setTimeout(resolve, 1000));
-    setIsOtpSent(true);
+    try {
+      setOtpError("");
+      const response = await sendOtp(email);
+      if (response.success) {
+        setIsOtpSent(true);
+      }
+    } catch (error: any) {
+      // Handle specific error status codes
+      const status = error.response?.status;
+      let errorMessage = "Failed to resend OTP. Please try again.";
+      
+      if (status === 400) {
+        errorMessage = error.response?.data?.error || "Email is required";
+      } else if (status === 404) {
+        errorMessage = error.response?.data?.error || "User not found";
+      } else if (status === 429) {
+        errorMessage = error.response?.data?.error || "Too many requests. Please try again later";
+      } else {
+        errorMessage = error.response?.data?.error || error.message || errorMessage;
+      }
+      
+      setOtpError(errorMessage);
+    }
   };
 
   return (

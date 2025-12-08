@@ -1,8 +1,10 @@
 import { UserCircle, X } from "lucide-react";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import SidebarItem from "./SidebarItem";
 import { sidebarItems } from "./sidebarConfig";
 import { useTheme } from "@/contexts/ThemeContext";
+import { useAppDispatch, useAppSelector } from "@/store/hooks";
+import { logoutUser } from "@/store/slices/authSlice";
 
 type Page = "dashboard" | "conversations" | "analytics" | "training" | "settings";
 
@@ -15,6 +17,9 @@ interface SidebarProps {
 export default function Sidebar({ isOpen, onClose, currentPage }: SidebarProps) {
   const { theme } = useTheme();
   const location = useLocation();
+  const navigate = useNavigate();
+  const dispatch = useAppDispatch();
+  const { user } = useAppSelector((state) => state.auth);
   const logoSrc = theme === "dark" ? "/logo_dark.png" : "/logo_light.png";
 
   const getCurrentPage = (): Page => {
@@ -83,14 +88,18 @@ export default function Sidebar({ isOpen, onClose, currentPage }: SidebarProps) 
         <div className="flex items-center gap-3 mb-3">
           <UserCircle className="w-8 h-8 text-[var(--admin-text-muted)]" />
           <div>
-            <p className="font-semibold text-[var(--admin-text)]">Admin User</p>
-            <p className="text-xs text-[var(--admin-text-dim)]">admin@chatbot.ai</p>
+            <p className="font-semibold text-[var(--admin-text)]">
+              {user?.full_name || "Admin User"}
+            </p>
+            <p className="text-xs text-[var(--admin-text-dim)]">
+              {user?.email || "admin@chatbot.ai"}
+            </p>
           </div>
         </div>
         <button
-          onClick={() => {
-            localStorage.removeItem("isAuthenticated");
-            window.location.href = "/login";
+          onClick={async () => {
+            await dispatch(logoutUser());
+            navigate("/login", { replace: true });
           }}
           className="w-full px-3 py-2 text-sm text-[var(--admin-text-muted)] hover:text-[var(--admin-text)] hover:bg-[var(--admin-border)] rounded-lg transition-all cursor-pointer"
         >
