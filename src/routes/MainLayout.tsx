@@ -5,11 +5,12 @@ import { Sidebar } from "@/components/sidebar";
 import { Dashboard } from "@/modules/dashboard";
 import { Conversations } from "@/modules/conversations";
 import { Analytics } from "@/modules/analytics";
+import { Users } from "@/modules/users";
 import { Training } from "@/modules/training";
 import { Settings } from "@/modules/settings";
 import { MobileMenuOverlay } from "@/components/layout";
 
-type Page = "dashboard" | "conversations" | "analytics" | "training" | "settings";
+type Page = "dashboard" | "conversations" | "analytics" | "users" | "training" | "settings";
 
 export function MainLayout() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -29,6 +30,7 @@ export function MainLayout() {
     if (path === "/" || path === "/dashboard") return "dashboard";
     if (path === "/conversations") return "conversations";
     if (path === "/analytics") return "analytics";
+    if (path === "/users") return "users";
     if (path === "/training") return "training";
     if (path === "/settings") return "settings";
     return "dashboard";
@@ -49,6 +51,7 @@ export function MainLayout() {
         <Route path="/dashboard" element={<Dashboard onMenuClick={handleMenuToggle} />} />
         <Route path="/conversations" element={<Conversations />} />
         <Route path="/analytics" element={<Analytics />} />
+        <Route path="/users" element={<Users />} />
         <Route path="/training" element={<Training />} />
         <Route path="/settings" element={<Settings />} />
       </Routes>

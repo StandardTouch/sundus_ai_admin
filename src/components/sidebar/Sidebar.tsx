@@ -7,7 +7,7 @@ import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { logoutUser } from "@/modules/auth/store";
 import { showSuccess } from "@/lib/utils/toast";
 
-type Page = "dashboard" | "conversations" | "analytics" | "training" | "settings";
+type Page = "dashboard" | "conversations" | "analytics" | "users" | "training" | "settings";
 
 interface SidebarProps {
   isOpen: boolean;
@@ -28,6 +28,7 @@ export default function Sidebar({ isOpen, onClose, currentPage }: SidebarProps) 
     if (path === "/" || path === "/dashboard") return "dashboard";
     if (path === "/conversations") return "conversations";
     if (path === "/analytics") return "analytics";
+    if (path === "/users") return "users";
     if (path === "/training") return "training";
     if (path === "/settings") return "settings";
     return "dashboard";
@@ -68,6 +69,7 @@ export default function Sidebar({ isOpen, onClose, currentPage }: SidebarProps) 
               "Dashboard": "dashboard",
               "Conversations": "conversations",
               "Analytics": "analytics",
+              "Users": "users",
               "Training": "training",
               "Settings": "settings",
             };
