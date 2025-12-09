@@ -32,8 +32,11 @@ apiClient.interceptors.response.use(
     return response;
   },
   async (error) => {
-    if (error.response?.status === 401) {
-      // Unauthorized - clear token and redirect to login
+    // Don't redirect on login endpoint errors - let the component handle it
+    const isLoginEndpoint = error.config?.url?.includes("/api/auth/login");
+    
+    if (error.response?.status === 401 && !isLoginEndpoint) {
+      // Unauthorized - clear token and redirect to login (but not for login endpoint)
       localStorage.removeItem("authToken");
       localStorage.removeItem("user");
       localStorage.removeItem("isAuthenticated");
@@ -42,7 +45,10 @@ apiClient.interceptors.response.use(
       const { deleteCookie } = await import("@/lib/utils/cookies");
       deleteCookie("authToken");
       
-      window.location.href = "/login";
+      // Only redirect if we're not already on login page
+      if (window.location.pathname !== "/login") {
+        window.location.href = "/login";
+      }
     }
     return Promise.reject(error);
   }

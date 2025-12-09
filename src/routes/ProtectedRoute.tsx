@@ -1,7 +1,7 @@
 import { Navigate } from "react-router-dom";
 import { useEffect } from "react";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
-import { fetchCurrentUser, setAuthFromStorage } from "@/store/slices/authSlice";
+import { fetchCurrentUser, setAuthFromStorage } from "@/modules/auth/store";
 
 export function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const dispatch = useAppDispatch();

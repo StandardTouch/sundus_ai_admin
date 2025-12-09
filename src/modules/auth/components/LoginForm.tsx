@@ -7,7 +7,8 @@ import ThemeToggle from "@/components/theme/ThemeToggle";
 import LoginLogo from "./LoginLogo";
 import PasswordField from "./PasswordField";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
-import { loginUser, updateLoginForm, clearLoginError } from "@/store/slices/authSlice";
+import { loginUser, updateLoginForm } from "../store";
+import { showError, showSuccess } from "@/lib/utils/toast";
 
 const loginSchema = Yup.object().shape({
   username: Yup.string()
@@ -53,18 +54,22 @@ export default function LoginForm({ onLoginSuccess, onForgotPassword }: LoginFor
     enableReinitialize: true, // Allow reinitialize from Redux state - this keeps form values in sync
     onSubmit: async (values, { setSubmitting }) => {
       // Update Redux with form values BEFORE login attempt to ensure they persist on error
-      dispatch(updateLoginForm({ field: "username", value: values.username }));
-      dispatch(updateLoginForm({ field: "password", value: values.password }));
-      dispatch(clearLoginError());
+      // Set clearError: false to prevent clearing the error on submit
+      dispatch(updateLoginForm({ field: "username", value: values.username, clearError: false }));
+      dispatch(updateLoginForm({ field: "password", value: values.password, clearError: false }));
+      // DON'T clear error here - let it persist until we get a new error or success
       
       try {
         await dispatch(loginUser({
           username: values.username,
           password: values.password,
         })).unwrap();
-      } catch (error) {
-        // Error is already handled by Redux slice
-        // Form values are preserved in Redux state
+        showSuccess("Login successful! Redirecting...");
+      } catch (error: any) {
+        // Error is already stored in Redux slice
+        // Show toast notification
+        const errorMessage = error || "An error occurred during login. Please try again.";
+        showError(errorMessage);
       } finally {
         setSubmitting(false);
       }
@@ -74,12 +79,21 @@ export default function LoginForm({ onLoginSuccess, onForgotPassword }: LoginFor
   // Update Redux when form values change
   const handleUsernameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     formik.handleChange(e);
-    dispatch(updateLoginForm({ field: "username", value: e.target.value }));
+    // clearError: true (default) - clear error when user manually types
+    dispatch(updateLoginForm({ field: "username", value: e.target.value, clearError: true }));
   };
 
   const handlePasswordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     formik.handleChange(e);
-    dispatch(updateLoginForm({ field: "password", value: e.target.value }));
+    // clearError: true (default) - clear error when user manually types
+    dispatch(updateLoginForm({ field: "password", value: e.target.value, clearError: true }));
+  };
+
+  // Explicit form submit handler to prevent page refresh
+  const handleFormSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    formik.handleSubmit(e as any);
   };
 
   // Both modes: secondary color background with white text
@@ -113,7 +127,7 @@ export default function LoginForm({ onLoginSuccess, onForgotPassword }: LoginFor
           </div>
         )}
 
-        <form onSubmit={formik.handleSubmit} className="space-y-5" noValidate>
+        <form onSubmit={handleFormSubmit} className="space-y-5" noValidate>
           {/* Username Field */}
           <div>
             <label htmlFor="username" className="block text-sm font-medium text-white mb-2">

@@ -23,26 +23,12 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     // Apply theme to document
     const root = document.documentElement;
-    console.log("Theme changed to:", theme);
-    console.log("Root element:", root);
-    console.log("Root classes before:", root.className);
     
     if (theme === "dark") {
       root.classList.add("dark");
-      console.log("Added 'dark' class to root");
     } else {
       root.classList.remove("dark");
-      console.log("Removed 'dark' class from root");
     }
-    
-    console.log("Root classes after:", root.className);
-    console.log("Has dark class?", root.classList.contains("dark"));
-    
-    // Check CSS variables
-    const computedBg = getComputedStyle(root).getPropertyValue("--admin-bg");
-    const computedText = getComputedStyle(root).getPropertyValue("--admin-text");
-    console.log("--admin-bg value:", computedBg);
-    console.log("--admin-text value:", computedText);
     
     // Save to localStorage
     localStorage.setItem("theme", theme);

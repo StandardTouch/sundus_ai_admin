@@ -109,11 +109,12 @@ const authSlice = createSlice({
     // Update login form fields
     updateLoginForm: (
       state,
-      action: { payload: { field: "username" | "password"; value: string } }
+      action: { payload: { field: "username" | "password"; value: string; clearError?: boolean } }
     ) => {
       state.loginForm[action.payload.field] = action.payload.value;
-      // Clear error when user types
-      if (state.loginForm.error) {
+      // Only clear error when user manually types (clearError is true or undefined for backward compatibility)
+      // Don't clear error when programmatically setting values on submit
+      if (action.payload.clearError !== false && state.loginForm.error) {
         state.loginForm.error = null;
       }
     },
@@ -154,8 +155,8 @@ const authSlice = createSlice({
     builder
       .addCase(loginUser.pending, (state) => {
         state.loginForm.isSubmitting = true;
-        state.loginForm.error = null;
-        state.error = null;
+        // DON'T clear error here - let it persist until we get a new error or success
+        state.error = null; // Only clear general auth error
       })
       .addCase(loginUser.fulfilled, (state, action) => {
         state.loginForm.isSubmitting = false;

@@ -7,6 +7,7 @@ import LoginLogo from "./LoginLogo";
 import EmailField from "./EmailField";
 import OtpInput from "./OtpInput";
 import { sendOtp, verifyOtp } from "@/lib/api/auth";
+import { showError, showSuccess, showInfo } from "@/lib/utils/toast";
 
 const emailSchema = Yup.object().shape({
   email: Yup.string()
@@ -39,6 +40,7 @@ export default function ForgotPasswordForm({ initialEmail = "", onCancel, onOtpS
         if (response.success) {
           setIsOtpSent(true);
           setStep("otp");
+          showSuccess("OTP has been sent to your email");
         }
       } catch (error: any) {
         // Handle specific error status codes
@@ -56,6 +58,7 @@ export default function ForgotPasswordForm({ initialEmail = "", onCancel, onOtpS
         }
         
         setFieldError("email", errorMessage);
+        showError(errorMessage);
       } finally {
         setSubmitting(false);
       }
@@ -69,9 +72,12 @@ export default function ForgotPasswordForm({ initialEmail = "", onCancel, onOtpS
       if (response.success && response.reset_token) {
         // Store reset token temporarily for password reset
         localStorage.setItem("resetToken", response.reset_token);
+        showSuccess("OTP verified successfully");
         onOtpSent(email, response.reset_token);
       } else {
-        setOtpError("OTP verification failed. Please try again.");
+        const errorMsg = "OTP verification failed. Please try again.";
+        setOtpError(errorMsg);
+        showError(errorMsg);
       }
     } catch (error: any) {
       // Handle specific error status codes
@@ -87,6 +93,7 @@ export default function ForgotPasswordForm({ initialEmail = "", onCancel, onOtpS
       }
       
       setOtpError(errorMessage);
+      showError(errorMessage);
     }
   };
 
@@ -96,6 +103,7 @@ export default function ForgotPasswordForm({ initialEmail = "", onCancel, onOtpS
       const response = await sendOtp(email);
       if (response.success) {
         setIsOtpSent(true);
+        showSuccess("OTP has been re-sent to your email");
       }
     } catch (error: any) {
       // Handle specific error status codes
@@ -113,6 +121,7 @@ export default function ForgotPasswordForm({ initialEmail = "", onCancel, onOtpS
       }
       
       setOtpError(errorMessage);
+      showError(errorMessage);
     }
   };
 

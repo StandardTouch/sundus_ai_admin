@@ -20,11 +20,6 @@ export default function Dashboard({ onMenuClick }: DashboardProps) {
     const bgSecondary = getComputedStyle(root).getPropertyValue("--admin-bg-secondary").trim();
     const textValue = getComputedStyle(root).getPropertyValue("--admin-text").trim();
     
-    console.log("=== Dashboard Component Debug ===");
-    console.log("--admin-bg:", bgValue);
-    console.log("--admin-bg-secondary:", bgSecondary);
-    console.log("--admin-text:", textValue);
-    console.log("HTML has dark class:", root.classList.contains("dark"));
   });
 
   return (

@@ -4,7 +4,8 @@ import SidebarItem from "./SidebarItem";
 import { sidebarItems } from "./sidebarConfig";
 import { useTheme } from "@/contexts/ThemeContext";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
-import { logoutUser } from "@/store/slices/authSlice";
+import { logoutUser } from "@/modules/auth/store";
+import { showSuccess } from "@/lib/utils/toast";
 
 type Page = "dashboard" | "conversations" | "analytics" | "training" | "settings";
 
@@ -99,6 +100,7 @@ export default function Sidebar({ isOpen, onClose, currentPage }: SidebarProps) 
         <button
           onClick={async () => {
             await dispatch(logoutUser());
+            showSuccess("Logged out successfully");
             navigate("/login", { replace: true });
           }}
           className="w-full px-3 py-2 text-sm text-[var(--admin-text-muted)] hover:text-[var(--admin-text)] hover:bg-[var(--admin-border)] rounded-lg transition-all cursor-pointer"

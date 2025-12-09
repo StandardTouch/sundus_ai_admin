@@ -6,6 +6,7 @@ import ThemeToggle from "@/components/theme/ThemeToggle";
 import LoginLogo from "./LoginLogo";
 import PasswordField from "./PasswordField";
 import { resetPassword } from "@/lib/api/auth";
+import { showError, showSuccess } from "@/lib/utils/toast";
 
 const passwordSchema = Yup.object().shape({
   password: Yup.string()
@@ -38,7 +39,9 @@ export default function NewPasswordForm({ email, onCancel, onSubmit }: NewPasswo
         const resetToken = localStorage.getItem("resetToken");
         
         if (!resetToken) {
-          setError("Reset token not found. Please start the password reset process again.");
+          const errorMsg = "Reset token not found. Please start the password reset process again.";
+          setError(errorMsg);
+          showError(errorMsg);
           return;
         }
 
@@ -46,6 +49,7 @@ export default function NewPasswordForm({ email, onCancel, onSubmit }: NewPasswo
         if (response.success) {
           // Clear reset token after successful password reset
           localStorage.removeItem("resetToken");
+          showSuccess("Password has been reset successfully");
           onSubmit(values.password);
         }
       } catch (error: any) {
@@ -65,6 +69,7 @@ export default function NewPasswordForm({ email, onCancel, onSubmit }: NewPasswo
         }
         
         setError(errorMessage);
+        showError(errorMessage);
       } finally {
         setSubmitting(false);
       }

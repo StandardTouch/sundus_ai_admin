@@ -34,8 +34,7 @@ export default function Login({ onLoginSuccess }: LoginProps) {
     navigate("/forgot-password/new-password", { replace: true });
   };
 
-  const handleNewPasswordSubmit = (password: string) => {
-    console.log("Password reset successful");
+  const handleNewPasswordSubmit = (_password: string) => {
     setShowNewPassword(false);
     setEmailForReset("");
     navigate("/login", { replace: true });
