@@ -37,7 +37,7 @@ const initialState: UsersState = {
 // Async thunk to fetch users
 export const fetchUsers = createAsyncThunk(
   "users/fetchUsers",
-  async (params?: GetUsersParams, { rejectWithValue }) => {
+  async (params: GetUsersParams = {}, { rejectWithValue }) => {
     try {
       const response = await getUsers(params);
       if (response.success) {
