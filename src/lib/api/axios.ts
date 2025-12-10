@@ -35,8 +35,12 @@ apiClient.interceptors.response.use(
     // Don't redirect on login endpoint errors - let the component handle it
     const isLoginEndpoint = error.config?.url?.includes("/api/auth/login");
     
-    if (error.response?.status === 401 && !isLoginEndpoint) {
-      // Unauthorized - clear token and redirect to login (but not for login endpoint)
+    // Only auto-logout on /api/auth/me failures (authentication verification)
+    // Other 401 errors should be handled by the component
+    const isAuthMeEndpoint = error.config?.url?.includes("/api/auth/me");
+    
+    if (error.response?.status === 401 && !isLoginEndpoint && isAuthMeEndpoint) {
+      // Authentication verification failed - clear token and redirect to login
       localStorage.removeItem("authToken");
       localStorage.removeItem("user");
       localStorage.removeItem("isAuthenticated");
@@ -50,6 +54,7 @@ apiClient.interceptors.response.use(
         window.location.href = "/login";
       }
     }
+    // For other 401 errors (like conversations, users, etc.), just reject and let component handle
     return Promise.reject(error);
   }
 );

@@ -94,3 +94,74 @@ export async function getConversations(
   return response.data;
 }
 
+export interface Message {
+  message_id: string;
+  role: "user" | "assistant";
+  content: string;
+  timestamp: string;
+  replied_to_message_id: string | null;
+  metadata: {
+    model?: string;
+    response_time_ms?: number;
+    accuracy_score?: number;
+  } | null;
+}
+
+export interface ConversationDetail {
+  conversation_id: string;
+  phone_number: string;
+  user_name: string | null;
+  first_timestamp: string;
+  last_timestamp: string;
+  total_messages: number;
+  rating: number;
+}
+
+export interface GetConversationParams {
+  page?: number;
+  limit?: number;
+}
+
+export interface GetConversationResponse {
+  success: boolean;
+  data: {
+    conversation: ConversationDetail;
+    messages: Message[];
+    pagination: PaginationInfo;
+  };
+}
+
+/**
+ * GET /api/conversations/:id
+ * Get a single conversation by ID with its messages
+ * 
+ * Headers:
+ * Authorization: Bearer <token> (admin or customer_support)
+ * 
+ * URL Parameters:
+ * - id: string (conversation ID)
+ * 
+ * Query Parameters:
+ * - page: number (default: 1) - Page number for message pagination
+ * - limit: number (default: 50) - Number of messages per page (max: 100)
+ */
+export async function getConversation(
+  id: string,
+  params?: GetConversationParams
+): Promise<GetConversationResponse> {
+  const queryParams = new URLSearchParams();
+
+  if (params?.page) {
+    queryParams.append("page", params.page.toString());
+  }
+  if (params?.limit) {
+    queryParams.append("limit", params.limit.toString());
+  }
+
+  const queryString = queryParams.toString();
+  const url = `/api/conversations/${id}${queryString ? `?${queryString}` : ""}`;
+
+  const response = await apiClient.get<GetConversationResponse>(url);
+  return response.data;
+}
+

@@ -4,6 +4,7 @@ import { useLocation } from "react-router-dom";
 import { Sidebar } from "@/components/sidebar";
 import { Dashboard } from "@/modules/dashboard";
 import { Conversations } from "@/modules/conversations";
+import ConversationDetail from "@/modules/conversations/page/ConversationDetail";
 import { Analytics } from "@/modules/analytics";
 import { Users } from "@/modules/users";
 import { Training } from "@/modules/training";
@@ -28,7 +29,7 @@ export function MainLayout() {
   const getCurrentPage = (): Page => {
     const path = location.pathname;
     if (path === "/" || path === "/dashboard") return "dashboard";
-    if (path === "/conversations") return "conversations";
+    if (path.startsWith("/conversations")) return "conversations";
     if (path === "/analytics") return "analytics";
     if (path === "/users") return "users";
     if (path === "/training") return "training";
@@ -50,6 +51,7 @@ export function MainLayout() {
         <Route path="/" element={<Dashboard onMenuClick={handleMenuToggle} />} />
         <Route path="/dashboard" element={<Dashboard onMenuClick={handleMenuToggle} />} />
         <Route path="/conversations" element={<Conversations />} />
+        <Route path="/conversations/:id" element={<ConversationDetail />} />
         <Route path="/analytics" element={<Analytics />} />
         <Route path="/users" element={<Users />} />
         <Route path="/training" element={<Training />} />
