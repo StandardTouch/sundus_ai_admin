@@ -10,6 +10,7 @@ import {
   ConversationsFilters,
   ConversationsPagination,
 } from "../components";
+import { ConversationsSkeleton } from "../components/shimmer";
 import { showError } from "@/lib/utils/toast";
 
 export default function Conversations() {
@@ -51,6 +52,16 @@ export default function Conversations() {
       dispatch(setSortOrder("desc"));
     }
   };
+
+  if (isLoading && conversations.length === 0) {
+    return (
+      <main className="flex-1 p-4 sm:p-6 overflow-y-auto w-full lg:w-auto bg-[var(--admin-bg)] text-[var(--admin-text)]">
+        <div className="max-w-7xl mx-auto">
+          <ConversationsSkeleton />
+        </div>
+      </main>
+    );
+  }
 
   return (
     <main className="flex-1 p-4 sm:p-6 overflow-y-auto w-full lg:w-auto bg-[var(--admin-bg)] text-[var(--admin-text)]">

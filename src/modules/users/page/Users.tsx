@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { fetchUsers, setSortBy, setSortOrder, deleteExistingUser } from "../store";
 import { UsersTable, UsersFilters, UsersPagination, CreateUserModal, EditUserModal, DeleteUserConfirmModal } from "../components";
+import { UsersSkeleton } from "../components/shimmer";
 import { showError } from "@/lib/utils/toast";
 import { Plus } from "lucide-react";
 import type { User } from "@/lib/api/users";
@@ -82,6 +83,16 @@ export default function Users() {
       // Error is already handled in the thunk with toast notification
     }
   };
+
+  if (isLoading && users.length === 0) {
+    return (
+      <main className="flex-1 p-4 sm:p-6 overflow-y-auto w-full lg:w-auto bg-[var(--admin-bg)] text-[var(--admin-text)]">
+        <div className="bg-[var(--admin-bg-secondary)] border border-[var(--admin-border)] rounded-xl p-4 sm:p-6">
+          <UsersSkeleton />
+        </div>
+      </main>
+    );
+  }
 
   return (
     <main className="flex-1 p-4 sm:p-6 overflow-y-auto w-full lg:w-auto bg-[var(--admin-bg)] text-[var(--admin-text)]">
