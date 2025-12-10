@@ -194,6 +194,40 @@ html.dark,
   }
 }
 
+/* Shimmer animation for skeleton loaders */
+@keyframes shimmer {
+  0% {
+    background-position: -1000px 0;
+  }
+  100% {
+    background-position: 1000px 0;
+  }
+}
+
+.shimmer {
+  background: linear-gradient(
+    to right,
+    var(--admin-bg-secondary) 0%,
+    var(--admin-border) 20%,
+    var(--admin-bg-secondary) 40%,
+    var(--admin-bg-secondary) 100%
+  );
+  background-size: 1000px 100%;
+  animation: shimmer 2s infinite linear;
+}
+
+html.dark .shimmer {
+  background: linear-gradient(
+    to right,
+    var(--admin-bg-secondary) 0%,
+    var(--admin-border-light) 20%,
+    var(--admin-bg-secondary) 40%,
+    var(--admin-bg-secondary) 100%
+  );
+  background-size: 1000px 100%;
+  animation: shimmer 2s infinite linear;
+}
+
 /* Mobile responsive utilities */
 @media (max-width: 768px) {
   .mobile-hidden {
