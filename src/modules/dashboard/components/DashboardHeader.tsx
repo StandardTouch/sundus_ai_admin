@@ -1,5 +1,6 @@
 import { Menu, Search, Settings } from "lucide-react";
 import ThemeToggle from "@/components/theme/ThemeToggle";
+import EnableAIToggle from "./EnableAIToggle";
 
 interface DashboardHeaderProps {
   onMenuClick: () => void;
@@ -27,6 +28,7 @@ export default function DashboardHeader({ onMenuClick }: DashboardHeaderProps) {
             className="w-full sm:w-auto bg-[var(--admin-bg-secondary)] border border-[var(--admin-border-light)] rounded-lg pl-9 pr-4 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-[var(--admin-primary-dark)] placeholder:text-[var(--admin-text-dim)] text-[var(--admin-text)]"
           />
         </div>
+        <EnableAIToggle />
         <ThemeToggle />
         <button 
           className="p-2 bg-[var(--admin-bg-secondary)] border border-[var(--admin-border-light)] rounded-lg hover:bg-[var(--admin-border)] cursor-pointer"
