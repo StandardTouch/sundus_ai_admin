@@ -12,6 +12,9 @@ module-name/
 │   └── ModuleName.tsx      # Main page component
 ├── components/             # Module-specific components
 │   └── ComponentName.tsx
+├── store/                  # Redux slice (if state management needed)
+│   ├── moduleSlice.ts
+│   └── index.ts
 ├── utils/                  # Module-specific utilities
 │   └── moduleUtils.ts
 ├── types/                  # TypeScript types (optional)
@@ -24,7 +27,11 @@ module-name/
 ### 1. Create Directory Structure
 
 ```bash
+# Basic module structure
 mkdir -p src/modules/your-module/{page,components,utils}
+
+# If state management is needed
+mkdir -p src/modules/your-module/store
 ```
 
 ### 2. Create Main Page Component
@@ -97,9 +104,115 @@ export const processYourData = (data: YourDataType[]) => {
 ```tsx
 export { default as YourModule } from "./page/YourModule";
 export * from "./utils/yourModuleUtils";
+// If using Redux
+export * from "./store";
 ```
 
-### 6. Add to Navigation
+### 6. Create Redux Slice (If Needed)
+
+**File**: `modules/your-module/store/yourModuleSlice.ts`
+
+```tsx
+import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
+import { getYourData } from "@/lib/api/yourModule";
+
+interface YourModuleState {
+  data: YourDataType[];
+  isLoading: boolean;
+  error: string | null;
+}
+
+const initialState: YourModuleState = {
+  data: [],
+  isLoading: false,
+  error: null,
+};
+
+// Async thunk
+export const fetchYourData = createAsyncThunk(
+  "yourModule/fetchYourData",
+  async (_, { rejectWithValue }) => {
+    try {
+      const response = await getYourData();
+      if (response.success) {
+        return response.data;
+      }
+      return rejectWithValue("Failed to fetch data");
+    } catch (error: any) {
+      return rejectWithValue(error.message || "An error occurred");
+    }
+  }
+);
+
+const yourModuleSlice = createSlice({
+  name: "yourModule",
+  initialState,
+  reducers: {
+    // Synchronous reducers
+    clearError: (state) => {
+      state.error = null;
+    },
+  },
+  extraReducers: (builder) => {
+    builder
+      .addCase(fetchYourData.pending, (state) => {
+        state.isLoading = true;
+        state.error = null;
+      })
+      .addCase(fetchYourData.fulfilled, (state, action) => {
+        state.isLoading = false;
+        state.data = action.payload;
+      })
+      .addCase(fetchYourData.rejected, (state, action) => {
+        state.isLoading = false;
+        state.error = action.payload as string;
+      });
+  },
+});
+
+export const { clearError } = yourModuleSlice.actions;
+export const yourModuleReducer = yourModuleSlice.reducer;
+```
+
+**File**: `modules/your-module/store/index.ts`
+
+```tsx
+export { yourModuleReducer, fetchYourData, clearError } from "./yourModuleSlice";
+```
+
+**Register in store**: `src/store/index.ts`
+
+```tsx
+import { configureStore } from "@reduxjs/toolkit";
+import { yourModuleReducer } from "@/modules/your-module/store";
+
+export const store = configureStore({
+  reducer: {
+    // ... existing reducers
+    yourModule: yourModuleReducer,
+  },
+});
+```
+
+### 7. Create API Functions (If Needed)
+
+**File**: `lib/api/yourModule.ts`
+
+```tsx
+import apiClient from "./axios";
+
+export interface YourDataResponse {
+  success: boolean;
+  data: YourDataType[];
+}
+
+export async function getYourData(): Promise<YourDataResponse> {
+  const response = await apiClient.get<YourDataResponse>("/api/your-endpoint");
+  return response.data;
+}
+```
+
+### 8. Add to Navigation
 
 **File**: `components/sidebar/sidebarConfig.ts`
 
@@ -129,10 +242,22 @@ The dashboard module demonstrates:
 
 ### Users Module
 
-The users module is a template for future development:
-- Basic page structure
-- Ready for components and utilities
-- Follows module pattern
+The users module demonstrates:
+- Full CRUD operations (Create, Read, Update, Delete)
+- Redux state management with async thunks
+- API integration
+- Responsive table/card layout
+- Modal components for create/edit/delete
+- Pagination, filtering, and sorting
+- Form validation with Formik and Yup
+
+**Key Files:**
+- `page/Users.tsx`: Main users page orchestrating all components
+- `components/UsersTable.tsx`: Table component with actions
+- `components/CreateUserModal.tsx`: Modal for creating users
+- `components/EditUserModal.tsx`: Modal for editing users
+- `components/DeleteUserConfirmModal.tsx`: Confirmation modal
+- `store/usersSlice.ts`: Redux slice with async thunks
 
 ## Component Development
 
@@ -212,15 +337,24 @@ export default function Form({ onSubmit, initialData }: FormProps) {
 
 ## Utility Functions
 
-### Data Fetching
+### Data Fetching with API
 
 ```tsx
-// utils/yourModuleUtils.ts
-export const fetchYourData = async (): Promise<DataType[]> => {
-  // API call or data fetching logic
-  const response = await fetch('/api/your-endpoint');
-  return response.json();
-};
+// lib/api/yourModule.ts
+import apiClient from "./axios";
+
+export async function getYourData(): Promise<YourDataResponse> {
+  const response = await apiClient.get<YourDataResponse>("/api/your-endpoint");
+  return response.data;
+}
+
+// In component or Redux thunk
+import { getYourData } from "@/lib/api/yourModule";
+
+const response = await getYourData();
+if (response.success) {
+  // Handle success
+}
 ```
 
 ### Data Transformation
@@ -279,14 +413,24 @@ import { YourModule } from "@/modules/your-module";
 <YourModule onAction={handleAction} />
 ```
 
-### Routing (Future)
+### Routing
 
-When routing is added:
+Add route in `src/routes/MainLayout.tsx`:
 
 ```tsx
 import { YourModule } from "@/modules/your-module";
 
 <Route path="/your-module" element={<YourModule />} />
+```
+
+Update `getCurrentPage` function if needed:
+
+```tsx
+const getCurrentPage = (): Page => {
+  const path = location.pathname;
+  if (path === "/your-module") return "your-module";
+  // ... other routes
+};
 ```
 
 ## Testing Your Module
@@ -321,33 +465,95 @@ test('returns data', () => {
 ### Loading States
 
 ```tsx
+// With useState
 const [loading, setLoading] = useState(true);
 const [data, setData] = useState<DataType[]>([]);
 
 useEffect(() => {
   const fetchData = async () => {
     setLoading(true);
-    const result = await fetchYourData();
-    setData(result);
-    setLoading(false);
+    try {
+      const response = await getYourData();
+      if (response.success) {
+        setData(response.data);
+      }
+    } finally {
+      setLoading(false);
+    }
   };
   fetchData();
 }, []);
 
 if (loading) return <div>Loading...</div>;
+
+// With Redux
+import { useAppSelector, useAppDispatch } from "@/store/hooks";
+import { fetchYourData } from "@/modules/your-module/store";
+
+const dispatch = useAppDispatch();
+const { data, isLoading } = useAppSelector((state) => state.yourModule);
+
+useEffect(() => {
+  dispatch(fetchYourData());
+}, [dispatch]);
+
+if (isLoading) return <div>Loading...</div>;
+```
+
+### Toast Notifications
+
+```tsx
+import { showSuccess, showError, showInfo } from "@/lib/utils/toast";
+
+// After successful operation
+showSuccess("Operation completed successfully");
+
+// After error
+showError("Something went wrong");
+
+// Info message
+showInfo("Processing your request...");
 ```
 
 ### Error Handling
 
 ```tsx
+// With try-catch
 const [error, setError] = useState<string | null>(null);
 
 try {
-  const data = await fetchYourData();
-  setData(data);
-} catch (err) {
-  setError(err instanceof Error ? err.message : 'An error occurred');
+  const response = await getYourData();
+  if (response.success) {
+    setData(response.data);
+  }
+} catch (err: any) {
+  const errorMessage =
+    err.response?.data?.error ||
+    err.message ||
+    "An error occurred";
+  setError(errorMessage);
+  showError(errorMessage); // Toast notification
 }
+
+// With Redux thunk
+export const fetchYourData = createAsyncThunk(
+  "yourModule/fetchYourData",
+  async (_, { rejectWithValue }) => {
+    try {
+      const response = await getYourData();
+      if (response.success) {
+        return response.data;
+      }
+      return rejectWithValue("Failed to fetch data");
+    } catch (error: any) {
+      const errorMessage =
+        error.response?.data?.error ||
+        error.message ||
+        "An error occurred";
+      return rejectWithValue(errorMessage);
+    }
+  }
+);
 ```
 
 ### Responsive Design
