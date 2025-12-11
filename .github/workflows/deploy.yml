@@ -11,8 +11,8 @@ permissions:
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
-    steps:
 
+    steps:
       - name: Checkout repo
         uses: actions/checkout@v4
 
@@ -30,17 +30,20 @@ jobs:
       - name: Prepare production env for Vite
         run: |
           echo "VITE_API_BASE_URL=${{ secrets.VITE_API_BASE_URL }}" > .env.production
-          echo "Contents of .env.production:"
+          echo "Generated .env.production:"
           sed -n '1,5p' .env.production
 
-      - name: Build & push Docker image (Cloud Build -> Artifact Registry)
+      - name: Build & Push Docker Image (Cloud Build -> Artifact Registry)
         env:
           PROJECT_ID: ${{ secrets.GCLOUD_PROJECT_ID }}
           REGION: ${{ secrets.REGION }}
         run: |
           IMAGE="us-central1-docker.pkg.dev/${PROJECT_ID}/react-repo/react-frontend:${GITHUB_SHA}"
-          echo "Building and pushing image: $IMAGE"
-          gcloud builds submit --tag "$IMAGE" . --no-log-follow
+          echo "Building image: $IMAGE"
+
+          # Submit build WITHOUT log streaming (async mode)
+          gcloud builds submit --tag "$IMAGE" . --async
+
           echo "IMAGE=$IMAGE" >> $GITHUB_ENV
 
       - name: Deploy to Cloud Run
