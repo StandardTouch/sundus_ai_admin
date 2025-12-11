@@ -23,7 +23,7 @@ interface NewPasswordFormProps {
   onSubmit: (password: string) => void;
 }
 
-export default function NewPasswordForm({ email, onCancel, onSubmit }: NewPasswordFormProps) {
+export default function NewPasswordForm({ email: _email, onCancel, onSubmit }: NewPasswordFormProps) {
   const [error, setError] = useState<string>("");
 
   const formik = useFormik({

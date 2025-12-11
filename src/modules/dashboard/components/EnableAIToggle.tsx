@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { getWebhookStatus, toggleWebhookStatus } from "@/lib/api/settings";
 import { showSuccess, showError } from "@/lib/utils/toast";
 import { Loader2 } from "lucide-react";

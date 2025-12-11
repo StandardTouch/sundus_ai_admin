@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import StatsCard from "../components/StatsCard";
 import MessageVolumeChart from "../components/MessageVolumeChart";
 import ResponseTimeChart from "../components/ResponseTimeChart";

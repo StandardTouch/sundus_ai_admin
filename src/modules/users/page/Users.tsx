@@ -9,7 +9,7 @@ import type { User } from "@/lib/api/users";
 
 export default function Users() {
   const dispatch = useAppDispatch();
-  const { users, pagination, filters, isLoading, error } = useAppSelector(
+  const { users, filters, isLoading, error } = useAppSelector(
     (state) => state.users
   );
   const { user: currentUser } = useAppSelector((state) => state.auth);

@@ -1,4 +1,4 @@
-import { useRef, useState, useEffect } from "react";
+import { useRef, useState } from "react";
 
 interface OtpInputProps {
   length?: number;
@@ -70,7 +70,9 @@ export default function OtpInput({ length = 6, onComplete, error }: OtpInputProp
         {Array.from({ length }).map((_, index) => (
           <input
             key={index}
-            ref={(el) => (inputRefs.current[index] = el)}
+            ref={(el) => {
+              inputRefs.current[index] = el;
+            }}
             type="text"
             inputMode="numeric"
             maxLength={1}

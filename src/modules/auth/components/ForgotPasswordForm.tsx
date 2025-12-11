@@ -7,7 +7,7 @@ import LoginLogo from "./LoginLogo";
 import EmailField from "./EmailField";
 import OtpInput from "./OtpInput";
 import { sendOtp, verifyOtp } from "@/lib/api/auth";
-import { showError, showSuccess, showInfo } from "@/lib/utils/toast";
+import { showError, showSuccess } from "@/lib/utils/toast";
 
 const emailSchema = Yup.object().shape({
   email: Yup.string()
@@ -24,7 +24,6 @@ interface ForgotPasswordFormProps {
 export default function ForgotPasswordForm({ initialEmail = "", onCancel, onOtpSent }: ForgotPasswordFormProps) {
   const [step, setStep] = useState<"email" | "otp">("email");
   const [email, setEmail] = useState(initialEmail);
-  const [isOtpSent, setIsOtpSent] = useState(false);
   const [otpError, setOtpError] = useState("");
 
   const formik = useFormik({
@@ -38,7 +37,6 @@ export default function ForgotPasswordForm({ initialEmail = "", onCancel, onOtpS
         setOtpError("");
         const response = await sendOtp(values.email);
         if (response.success) {
-          setIsOtpSent(true);
           setStep("otp");
           showSuccess("OTP has been sent to your email");
         }
@@ -102,7 +100,6 @@ export default function ForgotPasswordForm({ initialEmail = "", onCancel, onOtpS
       setOtpError("");
       const response = await sendOtp(email);
       if (response.success) {
-        setIsOtpSent(true);
         showSuccess("OTP has been re-sent to your email");
       }
     } catch (error: any) {

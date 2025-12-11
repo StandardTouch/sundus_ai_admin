@@ -1,5 +1,5 @@
 import { UserCircle, X } from "lucide-react";
-import { Link, useLocation, useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import SidebarItem from "./SidebarItem";
 import { sidebarItems } from "./sidebarConfig";
 import { useTheme } from "@/contexts/ThemeContext";
@@ -17,24 +17,12 @@ interface SidebarProps {
 
 export default function Sidebar({ isOpen, onClose, currentPage }: SidebarProps) {
   const { theme } = useTheme();
-  const location = useLocation();
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
   const { user } = useAppSelector((state) => state.auth);
   const logoSrc = theme === "dark" ? "/logo_dark.png" : "/logo_light.png";
 
-  const getCurrentPage = (): Page => {
-    const path = location.pathname;
-    if (path === "/" || path === "/dashboard") return "dashboard";
-    if (path === "/conversations") return "conversations";
-    if (path === "/analytics") return "analytics";
-    if (path === "/users") return "users";
-    if (path === "/training") return "training";
-    if (path === "/settings") return "settings";
-    return "dashboard";
-  };
-
-  const activePage = getCurrentPage();
+  const activePage = currentPage;
 
   return (
     <aside

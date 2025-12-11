@@ -1,4 +1,3 @@
-import { LineChart } from "lucide-react";
 
 interface ResponseTimeChartProps {
   data: { dates: string[]; times: number[] };

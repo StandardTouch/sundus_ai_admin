@@ -5,7 +5,6 @@ import {
   type PaginationInfo,
   type GetConversationsParams,
 } from "@/lib/api/conversations";
-import { showError } from "@/lib/utils/toast";
 
 export interface ConversationsState {
   conversations: Conversation[];
