@@ -30,34 +30,52 @@ jobs:
       - name: Prepare production env for Vite
         run: |
           echo "VITE_API_BASE_URL=${{ secrets.VITE_API_BASE_URL }}" > .env.production
-          echo "Generated .env.production:"
-          sed -n '1,5p' .env.production
+          echo ".env.production created."
 
       - name: Build & Push Docker Image (Cloud Build -> Artifact Registry)
         env:
           PROJECT_ID: ${{ secrets.GCLOUD_PROJECT_ID }}
-          REGION: ${{ secrets.REGION }}
         run: |
           IMAGE="us-central1-docker.pkg.dev/${PROJECT_ID}/react-repo/react-frontend:${GITHUB_SHA}"
-          echo "Building image: $IMAGE"
+          echo "IMAGE=$IMAGE" >> $GITHUB_ENV
+          echo "Submitting Cloud Build job for $IMAGE"
 
-          # Submit build WITHOUT log streaming (async mode)
+          # Use async build because log streaming is blocked
           gcloud builds submit --tag "$IMAGE" . --async
 
-          echo "IMAGE=$IMAGE" >> $GITHUB_ENV
+      - name: Wait for image to become available
+        env:
+          PROJECT_ID: ${{ secrets.GCLOUD_PROJECT_ID }}
+        run: |
+          echo "Waiting for image to appear in Artifact Registry..."
+          for i in {1..60}; do
+            gcloud artifacts docker images list \
+              us-central1-docker.pkg.dev/${PROJECT_ID}/react-repo \
+              --format="get(version)" | grep -q "${GITHUB_SHA}" && {
+                echo "Image found!"
+                break
+              }
+            echo "Image not ready yet... retrying ($i/60)"
+            sleep 5
+          done
 
       - name: Deploy to Cloud Run
         env:
           REGION: ${{ secrets.REGION }}
         run: |
+          echo "Deploying to Cloud Run..."
           gcloud run deploy react-frontend \
             --image="$IMAGE" \
             --region="${REGION}" \
             --platform=managed \
             --allow-unauthenticated
+          echo "Deployment completed."
 
       - name: Show Cloud Run URL
+        env:
+          REGION: ${{ secrets.REGION }}
         run: |
+          echo "Service URL:"
           gcloud run services describe react-frontend \
-            --region=${{ secrets.REGION }} \
+            --region="${REGION}" \
             --format='value(status.url)'
