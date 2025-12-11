@@ -40,7 +40,7 @@ jobs:
         run: |
           IMAGE="us-central1-docker.pkg.dev/${PROJECT_ID}/react-repo/react-frontend:${GITHUB_SHA}"
           echo "Building and pushing image: $IMAGE"
-          gcloud builds submit --tag "$IMAGE" .
+          gcloud builds submit --tag "$IMAGE" . --no-log-follow
           echo "IMAGE=$IMAGE" >> $GITHUB_ENV
 
       - name: Deploy to Cloud Run
