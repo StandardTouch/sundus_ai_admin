@@ -9,11 +9,10 @@ import { Analytics } from "@/modules/analytics";
 import { Users } from "@/modules/users";
 import { Faqs } from "@/modules/faqs";
 import { Suggestions } from "@/modules/faqSuggestions";
-import { Training } from "@/modules/training";
 import { Settings } from "@/modules/settings";
 import { MobileMenuOverlay } from "@/components/layout";
 
-type Page = "dashboard" | "conversations" | "analytics" | "users" | "faqs" | "suggestions" | "training" | "settings";
+type Page = "dashboard" | "conversations" | "analytics" | "users" | "faqs" | "suggestions" | "settings";
 
 export function MainLayout() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -36,7 +35,6 @@ export function MainLayout() {
     if (path === "/users") return "users";
     if (path === "/faqs") return "faqs";
     if (path === "/suggestions") return "suggestions";
-    if (path === "/training") return "training";
     if (path === "/settings") return "settings";
     return "dashboard";
   };
@@ -60,7 +58,6 @@ export function MainLayout() {
         <Route path="/users" element={<Users />} />
         <Route path="/faqs" element={<Faqs />} />
         <Route path="/suggestions" element={<Suggestions />} />
-        <Route path="/training" element={<Training />} />
         <Route path="/settings" element={<Settings />} />
       </Routes>
     </div>
