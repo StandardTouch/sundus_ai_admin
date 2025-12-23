@@ -49,17 +49,19 @@ export function MainLayout() {
         onClose={handleMenuClose}
         currentPage={currentPage}
       />
-      <Routes>
-        <Route path="/" element={<Dashboard onMenuClick={handleMenuToggle} />} />
-        <Route path="/dashboard" element={<Dashboard onMenuClick={handleMenuToggle} />} />
-        <Route path="/conversations" element={<Conversations />} />
-        <Route path="/conversations/:id" element={<ConversationDetail />} />
-        <Route path="/analytics" element={<Analytics />} />
-        <Route path="/users" element={<Users />} />
-        <Route path="/faqs" element={<Faqs />} />
-        <Route path="/suggestions" element={<Suggestions />} />
-        <Route path="/settings" element={<Settings />} />
-      </Routes>
+      <div className="flex-1 lg:ml-64">
+        <Routes>
+          <Route path="/" element={<Dashboard onMenuClick={handleMenuToggle} />} />
+          <Route path="/dashboard" element={<Dashboard onMenuClick={handleMenuToggle} />} />
+          <Route path="/conversations" element={<Conversations />} />
+          <Route path="/conversations/:id" element={<ConversationDetail />} />
+          <Route path="/analytics" element={<Analytics />} />
+          <Route path="/users" element={<Users />} />
+          <Route path="/faqs" element={<Faqs />} />
+          <Route path="/suggestions" element={<Suggestions />} />
+          <Route path="/settings" element={<Settings />} />
+        </Routes>
+      </div>
     </div>
   );
 }

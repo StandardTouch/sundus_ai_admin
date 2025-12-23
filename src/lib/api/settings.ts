@@ -105,3 +105,97 @@ export async function updateSupportPhoneNumber(
   return response.data;
 }
 
+/**
+ * GET /api/settings/tools
+ * Get all tools with their enable/disable status
+ * 
+ * Headers:
+ * Authorization: Bearer <token> (admin or customer_support)
+ */
+export interface Tool {
+  _id: string;
+  tool_name: string;
+  category: string;
+  display_name: string;
+  description: string;
+  is_enabled: boolean;
+  updated_by: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface GetToolsResponse {
+  success: boolean;
+  data: {
+    tools: Tool[];
+  };
+}
+
+export async function getTools(): Promise<GetToolsResponse> {
+  const response = await apiClient.get<GetToolsResponse>("/api/settings/tools");
+  return response.data;
+}
+
+/**
+ * PUT /api/settings/tools/:toolName/toggle
+ * Toggle tool enable/disable status
+ * 
+ * Headers:
+ * Authorization: Bearer <token> (admin or customer_support)
+ * 
+ * URL Parameters:
+ * - toolName: string (Tool name, e.g., "search_products", "track_order")
+ */
+export interface ToggleToolResponse {
+  success: boolean;
+  data: Tool;
+  message: string;
+}
+
+export async function toggleTool(toolName: string): Promise<ToggleToolResponse> {
+  const response = await apiClient.put<ToggleToolResponse>(
+    `/api/settings/tools/${toolName}/toggle`
+  );
+  return response.data;
+}
+
+/**
+ * PUT /api/settings/tools/:toolName
+ * Update tool settings (enable/disable or update metadata)
+ * 
+ * Headers:
+ * Authorization: Bearer <token> (admin or customer_support)
+ * 
+ * URL Parameters:
+ * - toolName: string (Tool name, e.g., "search_products", "track_order")
+ * 
+ * Request Body (all fields optional):
+ * {
+ *   "is_enabled": false,
+ *   "display_name": "Search Products",
+ *   "description": "Updated description..."
+ * }
+ */
+export interface UpdateToolRequest {
+  is_enabled?: boolean;
+  display_name?: string;
+  description?: string;
+}
+
+export interface UpdateToolResponse {
+  success: boolean;
+  data: Tool;
+  message: string;
+}
+
+export async function updateTool(
+  toolName: string,
+  data: UpdateToolRequest
+): Promise<UpdateToolResponse> {
+  const response = await apiClient.put<UpdateToolResponse>(
+    `/api/settings/tools/${toolName}`,
+    data
+  );
+  return response.data;
+}
+

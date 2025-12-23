@@ -1,4 +1,4 @@
-import { SupportPhoneNumber } from "../components";
+import { SupportPhoneNumber, ToolsManagement } from "../components";
 
 export default function Settings() {
   return (
@@ -14,6 +14,9 @@ export default function Settings() {
 
         {/* Support Phone Number */}
         <SupportPhoneNumber />
+
+        {/* Tools Management */}
+        <ToolsManagement />
       </div>
     </main>
   );
