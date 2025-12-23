@@ -1,7 +1,8 @@
-import { LucideIcon, TrendingUp, TrendingDown } from "lucide-react";
+import React from "react";
+import { TrendingUp, TrendingDown } from "lucide-react";
 
 interface AnalyticsStatsCardProps {
-  icon: LucideIcon;
+  icon: React.ComponentType<React.SVGProps<SVGSVGElement>>;
   iconColor: string;
   value: string | number;
   label: string;

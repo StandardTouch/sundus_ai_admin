@@ -1,9 +1,19 @@
+import { SupportPhoneNumber } from "../components";
+
 export default function Settings() {
   return (
     <main className="flex-1 p-4 sm:p-6 overflow-y-auto w-full lg:w-auto bg-[var(--admin-bg)] text-[var(--admin-text)]">
-      <div className="bg-[var(--admin-bg-secondary)] border border-[var(--admin-border)] rounded-xl p-4 sm:p-6">
-        <h2 className="text-xl sm:text-2xl font-bold mb-4 text-[var(--admin-text)]">Settings</h2>
-        <p className="text-[var(--admin-text-muted)]">Settings module coming soon...</p>
+      <div className="space-y-6">
+        {/* Header */}
+        <div>
+          <h2 className="text-xl sm:text-2xl font-bold mb-2 text-[var(--admin-text)]">Settings</h2>
+          <p className="text-sm text-[var(--admin-text-muted)]">
+            Manage application settings and configurations
+          </p>
+        </div>
+
+        {/* Support Phone Number */}
+        <SupportPhoneNumber />
       </div>
     </main>
   );

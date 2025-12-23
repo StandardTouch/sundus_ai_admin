@@ -4,6 +4,7 @@ import { usersReducer } from "@/modules/users/store";
 import { conversationsReducer } from "@/modules/conversations/store";
 import { faqsReducer } from "@/modules/faqs/store";
 import { suggestionsReducer } from "@/modules/faqSuggestions/store";
+import { settingsReducer } from "@/modules/settings/store";
 
 export const store = configureStore({
   reducer: {
@@ -12,6 +13,7 @@ export const store = configureStore({
     conversations: conversationsReducer,
     faqs: faqsReducer,
     suggestions: suggestionsReducer,
+    settings: settingsReducer,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({

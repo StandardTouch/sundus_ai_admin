@@ -52,3 +52,56 @@ export async function toggleWebhookStatus(): Promise<ToggleWebhookStatusResponse
   return response.data;
 }
 
+/**
+ * GET /api/settings/support-phone-number
+ * Get support phone number
+ * 
+ * Headers:
+ * Authorization: Bearer <token> (admin or customer_support)
+ */
+export interface GetSupportPhoneNumberResponse {
+  success: boolean;
+  data: {
+    phone_number: string;
+  };
+}
+
+export async function getSupportPhoneNumber(): Promise<GetSupportPhoneNumberResponse> {
+  const response = await apiClient.get<GetSupportPhoneNumberResponse>("/api/settings/support-phone-number");
+  return response.data;
+}
+
+/**
+ * PUT /api/settings/support-phone-number
+ * Update support phone number
+ * 
+ * Headers:
+ * Authorization: Bearer <token> (admin or customer_support)
+ * 
+ * Request Body:
+ * {
+ *   "phone_number": "+966 9200 09339"
+ * }
+ */
+export interface UpdateSupportPhoneNumberRequest {
+  phone_number: string;
+}
+
+export interface UpdateSupportPhoneNumberResponse {
+  success: boolean;
+  data: {
+    phone_number: string;
+  };
+  message: string;
+}
+
+export async function updateSupportPhoneNumber(
+  data: UpdateSupportPhoneNumberRequest
+): Promise<UpdateSupportPhoneNumberResponse> {
+  const response = await apiClient.put<UpdateSupportPhoneNumberResponse>(
+    "/api/settings/support-phone-number",
+    data
+  );
+  return response.data;
+}
+
