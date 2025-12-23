@@ -18,9 +18,26 @@ export interface AuthState {
   };
 }
 
+// Helper function to get user from localStorage
+const getUserFromStorage = (): User | null => {
+  const userStr = localStorage.getItem("user");
+  if (userStr) {
+    try {
+      return JSON.parse(userStr);
+    } catch (error) {
+      // Invalid user data, clear it
+      localStorage.removeItem("user");
+      localStorage.removeItem("authToken");
+      localStorage.removeItem("isAuthenticated");
+      return null;
+    }
+  }
+  return null;
+};
+
 // Initial State
 const initialState: AuthState = {
-  user: null,
+  user: getUserFromStorage(),
   token: localStorage.getItem("authToken") || null,
   isAuthenticated: !!localStorage.getItem("authToken"),
   isLoading: false,
