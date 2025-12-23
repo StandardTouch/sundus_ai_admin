@@ -4,15 +4,32 @@ interface WeeklyTrendChartProps {
   data: WeeklyTrendData[];
 }
 
+const dayOrder: Record<string, number> = {
+  Mon: 1,
+  Tue: 2,
+  Wed: 3,
+  Thu: 4,
+  Fri: 5,
+  Sat: 6,
+  Sun: 7,
+};
+
 export default function WeeklyTrendChart({ data }: WeeklyTrendChartProps) {
-  const maxConversations = Math.max(...data.map((d) => d.conversations), 1);
-  const maxFaqs = Math.max(...data.map((d) => d.faqs), 1);
+  // Sort data by day order (Mon to Sun)
+  const sortedData = [...data].sort((a, b) => {
+    const orderA = dayOrder[a.day] || 999;
+    const orderB = dayOrder[b.day] || 999;
+    return orderA - orderB;
+  });
+
+  const maxConversations = Math.max(...sortedData.map((d) => d.conversations), 1);
+  const maxFaqs = Math.max(...sortedData.map((d) => d.faqs), 1);
 
   return (
     <div className="bg-[var(--admin-bg-secondary)] border border-[var(--admin-border)] rounded-xl p-4 sm:p-6">
       <h3 className="text-lg font-semibold text-[var(--admin-text)] mb-4">Weekly Trend</h3>
       <div className="space-y-3">
-        {data.map((item, index) => (
+        {sortedData.map((item, index) => (
           <div key={index} className="space-y-2">
             <div className="flex items-center justify-between text-sm">
               <span className="text-[var(--admin-text-muted)]">{item.day}</span>

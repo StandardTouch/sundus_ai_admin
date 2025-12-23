@@ -14,7 +14,7 @@ export default function CategoryDistribution({ data }: CategoryDistributionProps
             <div className="flex items-center justify-between text-sm">
               <div className="flex items-center gap-2">
                 <span className="text-[var(--admin-text)] font-medium capitalize">{item.category}</span>
-                <span className="text-[var(--admin-text-muted)]">({item.totalUsage})</span>
+                <span className="text-[var(--admin-text-muted)]">({item.count} FAQs)</span>
               </div>
               <span className="text-[var(--admin-text-muted)] font-medium">{item.percentage}%</span>
             </div>

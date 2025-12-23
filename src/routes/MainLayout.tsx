@@ -1,7 +1,8 @@
-import { Routes, Route } from "react-router-dom";
+import { Routes, Route, Navigate } from "react-router-dom";
 import { useState } from "react";
 import { useLocation } from "react-router-dom";
 import { Sidebar } from "@/components/sidebar";
+import ProtectedRoute from "@/components/ProtectedRoute";
 import { Dashboard } from "@/modules/dashboard";
 import { Conversations } from "@/modules/conversations";
 import ConversationDetail from "@/modules/conversations/page/ConversationDetail";
@@ -11,12 +12,14 @@ import { Faqs } from "@/modules/faqs";
 import { Suggestions } from "@/modules/faqSuggestions";
 import { Settings } from "@/modules/settings";
 import { MobileMenuOverlay } from "@/components/layout";
+import { useAppSelector } from "@/store/hooks";
 
 type Page = "dashboard" | "conversations" | "analytics" | "users" | "faqs" | "suggestions" | "settings";
 
 export function MainLayout() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const location = useLocation();
+  const { user } = useAppSelector((state) => state.auth);
 
   const handleMenuToggle = () => {
     setIsMobileMenuOpen(true);
@@ -41,6 +44,9 @@ export function MainLayout() {
 
   const currentPage = getCurrentPage();
 
+  // Default redirect path based on role
+  const defaultPath = user?.role === "customer_support" ? "/faqs" : "/dashboard";
+
   return (
     <div className="min-h-screen flex bg-[var(--admin-bg)] text-[var(--admin-text)]">
       <MobileMenuOverlay isOpen={isMobileMenuOpen} onClose={handleMenuClose} />
@@ -51,15 +57,71 @@ export function MainLayout() {
       />
       <div className="flex-1 lg:ml-64">
         <Routes>
-          <Route path="/" element={<Dashboard onMenuClick={handleMenuToggle} />} />
-          <Route path="/dashboard" element={<Dashboard onMenuClick={handleMenuToggle} />} />
-          <Route path="/conversations" element={<Conversations />} />
-          <Route path="/conversations/:id" element={<ConversationDetail />} />
-          <Route path="/analytics" element={<Analytics />} />
-          <Route path="/users" element={<Users />} />
-          <Route path="/faqs" element={<Faqs />} />
-          <Route path="/suggestions" element={<Suggestions />} />
-          <Route path="/settings" element={<Settings />} />
+          <Route path="/" element={<Navigate to={defaultPath} replace />} />
+          <Route 
+            path="/dashboard" 
+            element={
+              <ProtectedRoute allowedRoles={["admin"]}>
+                <Dashboard onMenuClick={handleMenuToggle} />
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/conversations" 
+            element={
+              <ProtectedRoute allowedRoles={["admin"]}>
+                <Conversations />
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/conversations/:id" 
+            element={
+              <ProtectedRoute allowedRoles={["admin"]}>
+                <ConversationDetail />
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/analytics" 
+            element={
+              <ProtectedRoute allowedRoles={["admin"]}>
+                <Analytics />
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/users" 
+            element={
+              <ProtectedRoute allowedRoles={["admin"]}>
+                <Users />
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/faqs" 
+            element={
+              <ProtectedRoute allowedRoles={["admin", "customer_support"]}>
+                <Faqs />
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/suggestions" 
+            element={
+              <ProtectedRoute allowedRoles={["admin", "customer_support"]}>
+                <Suggestions />
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/settings" 
+            element={
+              <ProtectedRoute allowedRoles={["admin"]}>
+                <Settings />
+              </ProtectedRoute>
+            } 
+          />
         </Routes>
       </div>
     </div>

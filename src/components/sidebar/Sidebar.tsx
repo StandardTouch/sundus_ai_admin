@@ -24,6 +24,20 @@ export default function Sidebar({ isOpen, onClose, currentPage }: SidebarProps) 
 
   const activePage = currentPage;
 
+  // Filter sidebar items based on user role
+  const getFilteredSidebarItems = () => {
+    if (user?.role === "customer_support") {
+      // Customer support only sees FAQs and FAQ Suggestions
+      return sidebarItems.filter(
+        (item) => item.label === "FAQs" || item.label === "FAQ Suggestions"
+      );
+    }
+    // Admin sees all items
+    return sidebarItems;
+  };
+
+  const filteredItems = getFilteredSidebarItems();
+
   return (
     <aside
       className={`fixed inset-y-0 left-0 z-50 w-64 border-r border-[var(--admin-border)] flex flex-col transform transition-transform duration-300 ease-in-out ${
@@ -38,7 +52,7 @@ export default function Sidebar({ isOpen, onClose, currentPage }: SidebarProps) 
       <div className="p-5 flex flex-col h-full">
         <div className="flex-shrink-0">
           <div className="flex items-center justify-between mb-10 relative">
-            <Link to="/dashboard" className="flex items-center justify-center w-full">
+            <Link to={user?.role === "customer_support" ? "/faqs" : "/dashboard"} className="flex items-center justify-center w-full">
               <img 
                 src={logoSrc} 
                 alt="Logo" 
@@ -55,7 +69,7 @@ export default function Sidebar({ isOpen, onClose, currentPage }: SidebarProps) 
           </div>
 
           <nav className="space-y-2">
-            {sidebarItems.map((item, i) => {
+            {filteredItems.map((item, i) => {
               const pageMap: Record<string, Page> = {
                 "Dashboard": "dashboard",
                 "Conversations": "conversations",
