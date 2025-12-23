@@ -3,6 +3,7 @@ import { authReducer } from "@/modules/auth/store";
 import { usersReducer } from "@/modules/users/store";
 import { conversationsReducer } from "@/modules/conversations/store";
 import { faqsReducer } from "@/modules/faqs/store";
+import { suggestionsReducer } from "@/modules/faqSuggestions/store";
 
 export const store = configureStore({
   reducer: {
@@ -10,6 +11,7 @@ export const store = configureStore({
     users: usersReducer,
     conversations: conversationsReducer,
     faqs: faqsReducer,
+    suggestions: suggestionsReducer,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({
