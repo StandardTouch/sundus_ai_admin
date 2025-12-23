@@ -1,4 +1,4 @@
-import { BarChart3, MessageSquare, LineChart, Users, Settings, GraduationCap } from "lucide-react";
+import { BarChart3, MessageSquare, LineChart, Users, Settings, GraduationCap, HelpCircle } from "lucide-react";
 import React from "react";
 
 export interface SidebarItemConfig {
@@ -12,6 +12,7 @@ export const sidebarItems: SidebarItemConfig[] = [
   { icon: Users, label: "Users", path: "/users" },
   { icon: MessageSquare, label: "Conversations", path: "/conversations" },
   { icon: LineChart, label: "Analytics", path: "/analytics" },
+  { icon: HelpCircle, label: "FAQs", path: "/faqs" },
   { icon: GraduationCap, label: "Training", path: "/training" },
   { icon: Settings, label: "Settings", path: "/settings" },
 ];

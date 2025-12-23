@@ -2,12 +2,14 @@ import { configureStore } from "@reduxjs/toolkit";
 import { authReducer } from "@/modules/auth/store";
 import { usersReducer } from "@/modules/users/store";
 import { conversationsReducer } from "@/modules/conversations/store";
+import { faqsReducer } from "@/modules/faqs/store";
 
 export const store = configureStore({
   reducer: {
     auth: authReducer,
     users: usersReducer,
     conversations: conversationsReducer,
+    faqs: faqsReducer,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({
