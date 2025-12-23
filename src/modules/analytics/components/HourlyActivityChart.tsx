@@ -1,14 +1,15 @@
-interface HourlyData {
-  hour: string;
-  conversations: number;
-}
+import type { HourlyActivityData } from "@/lib/api/analytics";
 
 interface HourlyActivityChartProps {
-  data: HourlyData[];
+  data: HourlyActivityData[];
 }
 
 export default function HourlyActivityChart({ data }: HourlyActivityChartProps) {
-  const maxConversations = Math.max(...data.map((d) => d.conversations));
+  const maxConversations = Math.max(...data.map((d) => d.conversations), 1);
+
+  const formatHour = (hour: number): string => {
+    return `${hour.toString().padStart(2, "0")}:00`;
+  };
 
   return (
     <div className="bg-[var(--admin-bg-secondary)] border border-[var(--admin-border)] rounded-xl p-4 sm:p-6">
@@ -17,8 +18,11 @@ export default function HourlyActivityChart({ data }: HourlyActivityChartProps) 
         {data.map((item, index) => (
           <div key={index} className="space-y-2">
             <div className="flex items-center justify-between text-sm">
-              <span className="text-[var(--admin-text-muted)]">{item.hour}</span>
-              <span className="text-[var(--admin-text)] font-medium">{item.conversations} conversations</span>
+              <span className="text-[var(--admin-text-muted)]">{formatHour(item.hour)}</span>
+              <div className="flex items-center gap-4">
+                <span className="text-[var(--admin-text)] font-medium">{item.conversations} conv</span>
+                <span className="text-[var(--admin-text-muted)]">{item.messages} msgs</span>
+              </div>
             </div>
             <div className="h-2 bg-[var(--admin-bg)] rounded-full overflow-hidden">
               <div

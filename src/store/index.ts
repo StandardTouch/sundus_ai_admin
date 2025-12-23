@@ -5,6 +5,7 @@ import { conversationsReducer } from "@/modules/conversations/store";
 import { faqsReducer } from "@/modules/faqs/store";
 import { suggestionsReducer } from "@/modules/faqSuggestions/store";
 import { settingsReducer } from "@/modules/settings/store";
+import { analyticsReducer } from "@/modules/analytics/store";
 
 export const store = configureStore({
   reducer: {
@@ -14,6 +15,7 @@ export const store = configureStore({
     faqs: faqsReducer,
     suggestions: suggestionsReducer,
     settings: settingsReducer,
+    analytics: analyticsReducer,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({

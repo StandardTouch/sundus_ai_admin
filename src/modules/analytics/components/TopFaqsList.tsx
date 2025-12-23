@@ -1,11 +1,7 @@
-interface TopFaq {
-  question: string;
-  usage: number;
-  category: string;
-}
+import type { TopFAQ } from "@/lib/api/analytics";
 
 interface TopFaqsListProps {
-  faqs: TopFaq[];
+  faqs: TopFAQ[];
 }
 
 export default function TopFaqsList({ faqs }: TopFaqsListProps) {
@@ -30,7 +26,7 @@ export default function TopFaqsList({ faqs }: TopFaqsListProps) {
               <p className="text-sm text-[var(--admin-text)] font-medium line-clamp-2">{faq.question}</p>
             </div>
             <div className="ml-4 text-right">
-              <p className="text-lg font-bold text-[var(--admin-text)]">{faq.usage}</p>
+              <p className="text-lg font-bold text-[var(--admin-text)]">{faq.usage_count}</p>
               <p className="text-xs text-[var(--admin-text-muted)]">uses</p>
             </div>
           </div>

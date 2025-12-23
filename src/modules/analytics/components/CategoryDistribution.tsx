@@ -1,11 +1,7 @@
-interface CategoryData {
-  category: string;
-  count: number;
-  percentage: number;
-}
+import type { CategoryDistribution } from "@/lib/api/analytics";
 
 interface CategoryDistributionProps {
-  data: CategoryData[];
+  data: CategoryDistribution[];
 }
 
 export default function CategoryDistribution({ data }: CategoryDistributionProps) {
@@ -18,7 +14,7 @@ export default function CategoryDistribution({ data }: CategoryDistributionProps
             <div className="flex items-center justify-between text-sm">
               <div className="flex items-center gap-2">
                 <span className="text-[var(--admin-text)] font-medium capitalize">{item.category}</span>
-                <span className="text-[var(--admin-text-muted)]">({item.count})</span>
+                <span className="text-[var(--admin-text-muted)]">({item.totalUsage})</span>
               </div>
               <span className="text-[var(--admin-text-muted)] font-medium">{item.percentage}%</span>
             </div>

@@ -1,16 +1,12 @@
-interface WeeklyData {
-  day: string;
-  conversations: number;
-  faqs: number;
-}
+import type { WeeklyTrendData } from "@/lib/api/analytics";
 
 interface WeeklyTrendChartProps {
-  data: WeeklyData[];
+  data: WeeklyTrendData[];
 }
 
 export default function WeeklyTrendChart({ data }: WeeklyTrendChartProps) {
-  const maxConversations = Math.max(...data.map((d) => d.conversations));
-  const maxFaqs = Math.max(...data.map((d) => d.faqs));
+  const maxConversations = Math.max(...data.map((d) => d.conversations), 1);
+  const maxFaqs = Math.max(...data.map((d) => d.faqs), 1);
 
   return (
     <div className="bg-[var(--admin-bg-secondary)] border border-[var(--admin-border)] rounded-xl p-4 sm:p-6">
@@ -23,6 +19,7 @@ export default function WeeklyTrendChart({ data }: WeeklyTrendChartProps) {
               <div className="flex items-center gap-4">
                 <span className="text-[var(--admin-text)] font-medium">{item.conversations} conv</span>
                 <span className="text-[var(--admin-text-muted)]">{item.faqs} FAQs</span>
+                <span className="text-[var(--admin-text-muted)]">{item.messages} msgs</span>
               </div>
             </div>
             <div className="flex gap-2 h-2">

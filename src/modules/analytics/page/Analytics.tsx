@@ -1,4 +1,8 @@
+import { useEffect } from "react";
 import { Users, MessageSquare, HelpCircle, Clock, BarChart3 } from "lucide-react";
+import { useAppDispatch, useAppSelector } from "@/store/hooks";
+import { fetchAnalytics } from "../store";
+import { showError } from "@/lib/utils/toast";
 import {
   AnalyticsStatsCard,
   WeeklyTrendChart,
@@ -8,99 +12,83 @@ import {
   ResponseTimeBreakdown,
   UserEngagementMetrics,
   PerformanceMetrics,
+  AnalyticsSkeleton,
 } from "../components";
 
 export default function Analytics() {
-  // Dummy data
+  const dispatch = useAppDispatch();
+  const { data, isLoading, error } = useAppSelector((state) => state.analytics);
+
+  useEffect(() => {
+    if (!data) {
+      dispatch(fetchAnalytics());
+    }
+  }, [dispatch, data]);
+
+  useEffect(() => {
+    if (error) {
+      showError(error);
+    }
+  }, [error]);
+
+  if (isLoading || !data) {
+    return (
+      <main className="flex-1 p-4 sm:p-6 overflow-y-auto w-full lg:w-auto bg-[var(--admin-bg)] text-[var(--admin-text)]">
+        <AnalyticsSkeleton />
+      </main>
+    );
+  }
+
+  // Format response time from milliseconds to seconds
+  const formatResponseTime = (ms: number): string => {
+    return `${(ms / 1000).toFixed(1)}s`;
+  };
+
+  // Prepare stats cards
   const stats = [
     {
       icon: MessageSquare,
       iconColor: "blue",
-      value: 1247,
+      value: data.totalConversations,
       label: "Total Conversations",
-      trend: { value: 12.5, isPositive: true },
+      trend: { value: data.totalConversationsChange, isPositive: data.totalConversationsChange >= 0 },
     },
     {
       icon: Users,
       iconColor: "green",
-      value: 342,
+      value: data.activeUsers,
       label: "Active Users",
-      trend: { value: 8.3, isPositive: true },
+      trend: { value: data.activeUsersChange, isPositive: data.activeUsersChange >= 0 },
     },
     {
       icon: HelpCircle,
       iconColor: "purple",
-      value: 892,
+      value: data.faqsUsed,
       label: "FAQs Used",
-      trend: { value: 5.2, isPositive: false },
+      trend: { value: data.faqsUsedChange, isPositive: data.faqsUsedChange >= 0 },
     },
     {
       icon: Clock,
       iconColor: "orange",
-      value: "1.2s",
+      value: formatResponseTime(data.avgResponseTime),
       label: "Avg Response Time",
     },
     {
       icon: BarChart3,
       iconColor: "yellow",
-      value: "94.5%",
+      value: `${data.satisfactionRate.toFixed(1)}%`,
       label: "Satisfaction Rate",
+      trend: { value: data.satisfactionRateChange, isPositive: data.satisfactionRateChange >= 0 },
     },
     {
       icon: MessageSquare,
       iconColor: "indigo",
-      value: 87,
-      label: "Today",
+      value: data.messagesToday,
+      label: "Messages Today",
     },
   ];
 
-  const weeklyTrend = [
-    { day: "Mon", conversations: 142, faqs: 98 },
-    { day: "Tue", conversations: 156, faqs: 112 },
-    { day: "Wed", conversations: 178, faqs: 125 },
-    { day: "Thu", conversations: 165, faqs: 118 },
-    { day: "Fri", conversations: 189, faqs: 134 },
-    { day: "Sat", conversations: 134, faqs: 95 },
-    { day: "Sun", conversations: 98, faqs: 68 },
-  ];
-
-  const hourlyData = [
-    { hour: "00:00", conversations: 12 },
-    { hour: "04:00", conversations: 8 },
-    { hour: "08:00", conversations: 45 },
-    { hour: "12:00", conversations: 78 },
-    { hour: "16:00", conversations: 92 },
-    { hour: "20:00", conversations: 65 },
-  ];
-
-  const topFaqs = [
-    { question: "What is your return policy?", usage: 234, category: "policies" },
-    { question: "How long does shipping take?", usage: 189, category: "shipping" },
-    { question: "What payment methods do you accept?", usage: 156, category: "payment" },
-    { question: "How do I track my order?", usage: 142, category: "orders" },
-    { question: "Can I cancel my order?", usage: 128, category: "orders" },
-  ];
-
-  const categoryUsage = [
-    { category: "policies", count: 456, percentage: 32 },
-    { category: "shipping", count: 342, percentage: 24 },
-    { category: "payment", count: 289, percentage: 20 },
-    { category: "orders", count: 234, percentage: 16 },
-    { category: "products", count: 145, percentage: 10 },
-  ];
-
-  const responseTimeData = [
-    { label: "< 1s", percentage: 68, color: "green" },
-    { label: "1-2s", percentage: 24, color: "yellow" },
-    { label: "> 2s", percentage: 8, color: "red" },
-  ];
-
-  const engagementMetrics = [
-    { label: "Avg Messages per Conversation", value: "4.2" },
-    { label: "Avg Session Duration", value: "3m 24s" },
-    { label: "FAQ Resolution Rate", value: "87%", highlight: true },
-  ];
-
+  // Performance metrics (not in API, keeping as dummy data for now)
   const performanceMetrics = [
     { label: "Uptime", value: "99.9%", percentage: 99.9, color: "green" },
     { label: "API Response Time", value: "142ms", percentage: 85, color: "blue" },
@@ -127,20 +115,20 @@ export default function Analytics() {
 
         {/* Charts Row */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <WeeklyTrendChart data={weeklyTrend} />
-          <HourlyActivityChart data={hourlyData} />
+          <WeeklyTrendChart data={data.weeklyTrend} />
+          <HourlyActivityChart data={data.hourlyActivity} />
         </div>
 
         {/* Bottom Row */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <TopFaqsList faqs={topFaqs} />
-          <CategoryDistribution data={categoryUsage} />
+          <TopFaqsList faqs={data.topFAQs} />
+          <CategoryDistribution data={data.categoryDistribution} />
         </div>
 
         {/* Additional Metrics */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <ResponseTimeBreakdown data={responseTimeData} />
-          <UserEngagementMetrics metrics={engagementMetrics} />
+          <ResponseTimeBreakdown data={data.responseTimeBreakdown} />
+          <UserEngagementMetrics data={data.userEngagement} />
           <PerformanceMetrics metrics={performanceMetrics} />
         </div>
       </div>
