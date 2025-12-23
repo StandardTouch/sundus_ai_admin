@@ -4,6 +4,7 @@ import MessageVolumeChart from "../components/MessageVolumeChart";
 import ResponseTimeChart from "../components/ResponseTimeChart";
 import RecentConversations from "../components/RecentConversations";
 import DashboardHeader from "../components/DashboardHeader";
+import SettingsModal from "../components/SettingsModal";
 import { DashboardSkeleton } from "../components/shimmer";
 import { getDashboardData } from "@/lib/api/dashboard";
 import {
@@ -23,6 +24,7 @@ export default function Dashboard({ onMenuClick }: DashboardProps) {
   const [dashboardData, setDashboardData] = useState<DashboardData | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
+  const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
 
   useEffect(() => {
     const fetchDashboardData = async () => {
@@ -90,8 +92,9 @@ export default function Dashboard({ onMenuClick }: DashboardProps) {
   if (isLoading) {
     return (
       <main className="flex-1 p-4 sm:p-6 overflow-y-auto w-full lg:w-auto bg-[var(--admin-bg)] text-[var(--admin-text)]">
-        <DashboardHeader onMenuClick={onMenuClick} />
+        <DashboardHeader onMenuClick={onMenuClick} onSettingsClick={() => setIsSettingsModalOpen(true)} />
         <DashboardSkeleton />
+        <SettingsModal isOpen={isSettingsModalOpen} onClose={() => setIsSettingsModalOpen(false)} />
       </main>
     );
   }
@@ -99,7 +102,7 @@ export default function Dashboard({ onMenuClick }: DashboardProps) {
   if (error || !dashboardData) {
     return (
       <main className="flex-1 p-4 sm:p-6 overflow-y-auto w-full lg:w-auto bg-[var(--admin-bg)] text-[var(--admin-text)]">
-        <DashboardHeader onMenuClick={onMenuClick} />
+        <DashboardHeader onMenuClick={onMenuClick} onSettingsClick={() => setIsSettingsModalOpen(true)} />
         <div className="flex items-center justify-center h-64">
           <div className="text-center max-w-md">
             <p className="text-lg font-semibold text-[var(--admin-text)] mb-2">
@@ -162,6 +165,7 @@ export default function Dashboard({ onMenuClick }: DashboardProps) {
             </button>
           </div>
         </div>
+        <SettingsModal isOpen={isSettingsModalOpen} onClose={() => setIsSettingsModalOpen(false)} />
       </main>
     );
   }
@@ -173,7 +177,7 @@ export default function Dashboard({ onMenuClick }: DashboardProps) {
 
   return (
     <main className="flex-1 p-4 sm:p-6 overflow-y-auto w-full lg:w-auto bg-[var(--admin-bg)] text-[var(--admin-text)]">
-      <DashboardHeader onMenuClick={onMenuClick} />
+      <DashboardHeader onMenuClick={onMenuClick} onSettingsClick={() => setIsSettingsModalOpen(true)} />
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-6 sm:mb-10">
@@ -190,6 +194,9 @@ export default function Dashboard({ onMenuClick }: DashboardProps) {
 
       {/* Recent Conversations */}
       <RecentConversations conversations={recentConversations} />
+
+      {/* Settings Modal */}
+      <SettingsModal isOpen={isSettingsModalOpen} onClose={() => setIsSettingsModalOpen(false)} />
     </main>
   );
 }
