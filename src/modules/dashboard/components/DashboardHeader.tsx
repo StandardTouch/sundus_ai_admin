@@ -1,6 +1,7 @@
 import { Menu, Settings } from "lucide-react";
 import ThemeToggle from "@/components/theme/ThemeToggle";
 import EnableAIToggle from "./EnableAIToggle";
+import ModuleSearch from "./ModuleSearch";
 
 interface DashboardHeaderProps {
   onMenuClick: () => void;
@@ -21,6 +22,7 @@ export default function DashboardHeader({ onMenuClick, onSettingsClick }: Dashbo
         <h2 className="text-xl sm:text-2xl font-bold text-[var(--admin-text)]">Dashboard Overview</h2>
       </div>
       <div className="flex items-center gap-2 sm:gap-4 w-full sm:w-auto">
+        <ModuleSearch />
         <EnableAIToggle />
         <ThemeToggle />
         <button 
