@@ -46,100 +46,89 @@ jobs:
           echo "Submitting Docker build..."
           BUILD_OUTPUT=$(gcloud builds submit --tag "$IMAGE" . --async 2>&1) || true
           
-          # Extract build ID from output (format: "Created [https://cloudbuild.googleapis.com/v1/projects/.../builds/BUILD_ID]")
-          # Try multiple patterns to extract build ID
-          BUILD_ID=$(echo "$BUILD_OUTPUT" | grep -o 'builds/[^/?]\+' | head -1 | cut -d'/' -f2)
+          echo "Build submission output:"
+          echo "$BUILD_OUTPUT"
           
-          # Alternative: extract from the full URL pattern
+          # Extract build ID from output - try multiple methods
+          # Method 1: Extract from URL pattern "builds/BUILD_ID" or "builds/BUILD_ID]"
+          BUILD_ID=$(echo "$BUILD_OUTPUT" | grep -oE 'builds/[a-f0-9-]+' | head -1 | cut -d'/' -f2 | tr -d ']')
+          
+          # Method 2: Extract UUID pattern directly
           if [ -z "$BUILD_ID" ]; then
-            BUILD_ID=$(echo "$BUILD_OUTPUT" | grep -o 'builds/[a-f0-9-]\+' | head -1 | sed 's/builds\///')
+            BUILD_ID=$(echo "$BUILD_OUTPUT" | grep -oE '[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}' | head -1 | tr -d ']')
           fi
           
+          # Method 3: Try to get from recent builds list
           if [ -z "$BUILD_ID" ]; then
-            echo "WARNING: Could not extract build ID from output"
-            echo "Build output: $BUILD_OUTPUT"
-            echo "Trying to find build ID from recent builds..."
-            # Try to find the build by checking recent builds
+            echo "WARNING: Could not extract build ID from output, trying to find from recent builds..."
             sleep 10
             BUILD_ID=$(gcloud builds list --limit=1 --format="value(id)" --filter="source.repoSource.commitSha:${GITHUB_SHA}" 2>/dev/null || echo "")
-            
-            if [ -z "$BUILD_ID" ]; then
-              echo "ERROR: Could not determine build ID. Build may have failed to start."
-              exit 1
-            fi
-            echo "Found build ID: $BUILD_ID"
-          else
-            echo "Build submitted with ID: $BUILD_ID"
-            echo "Waiting for build to complete..."
-            
-            # Poll for build status
-            MAX_WAIT=1800  # 30 minutes max
-            ELAPSED=0
-            INTERVAL=10
-            
-            while [ $ELAPSED -lt $MAX_WAIT ]; do
-              STATUS=$(gcloud builds describe "$BUILD_ID" --format="value(status)" 2>/dev/null || echo "UNKNOWN")
-              
-              if [ "$STATUS" = "SUCCESS" ]; then
-                echo "Build completed successfully!"
-                break
-              elif [ "$STATUS" = "FAILURE" ] || [ "$STATUS" = "CANCELLED" ] || [ "$STATUS" = "EXPIRED" ]; then
-                echo "ERROR: Build failed with status: $STATUS"
-                echo "Build logs: https://console.cloud.google.com/cloud-build/builds/$BUILD_ID?project=${PROJECT_ID}"
-                exit 1
-              elif [ "$STATUS" = "UNKNOWN" ]; then
-                echo "WARNING: Could not get build status, waiting..."
-              else
-                echo "Build status: $STATUS (waiting...)"
-              fi
-              
-              sleep $INTERVAL
-              ELAPSED=$((ELAPSED + INTERVAL))
-            done
-            
-            if [ $ELAPSED -ge $MAX_WAIT ]; then
-              echo "ERROR: Build timed out after $MAX_WAIT seconds"
-              echo "Build ID: $BUILD_ID"
-              echo "Check build status: https://console.cloud.google.com/cloud-build/builds/$BUILD_ID?project=${PROJECT_ID}"
-              exit 1
-            fi
           fi
           
-          # Verify image exists with retry logic
-          echo "Verifying image exists in Artifact Registry..."
-          MAX_RETRIES=10
-          RETRY_COUNT=0
+          # Clean build ID - remove any trailing brackets or special characters
+          BUILD_ID=$(echo "$BUILD_ID" | tr -d '[]' | xargs)
+          
+          if [ -z "$BUILD_ID" ]; then
+            echo "ERROR: Could not determine build ID. Build may have failed to start."
+            echo "Full build output:"
+            echo "$BUILD_OUTPUT"
+            exit 1
+          fi
+          
+          echo "Build submitted with ID: $BUILD_ID"
+          echo "Build URL: https://console.cloud.google.com/cloud-build/builds/$BUILD_ID?project=${PROJECT_ID}"
+          echo "Waiting for build to complete (will check image in registry instead of build status)..."
+          
+          # Instead of polling build status (which may have permission issues),
+          # wait for the image to appear in the registry
+          # This is more reliable and doesn't require build status permissions
+          
+          # Wait for image to appear in registry (this is more reliable than polling build status)
+          echo "Waiting for image to appear in Artifact Registry..."
+          echo "This may take a few minutes while the build completes..."
+          
+          MAX_WAIT=1800  # 30 minutes max
+          ELAPSED=0
+          INTERVAL=10
           IMAGE_FOUND=false
           
-          while [ $RETRY_COUNT -lt $MAX_RETRIES ]; do
+          while [ $ELAPSED -lt $MAX_WAIT ]; do
+            # Check if image exists
             IMAGE_LIST=$(gcloud artifacts docker images list \
               us-central1-docker.pkg.dev/${PROJECT_ID}/react-repo/react-frontend \
               --filter="tags:${GITHUB_SHA}" \
               --format="value(tags)" 2>/dev/null || echo "")
             
             if echo "$IMAGE_LIST" | grep -q "${GITHUB_SHA}"; then
-              echo "Image verified successfully!"
+              echo "✓ Image found in registry!"
               IMAGE_FOUND=true
               break
             fi
             
-            RETRY_COUNT=$((RETRY_COUNT + 1))
-            if [ $RETRY_COUNT -lt $MAX_RETRIES ]; then
-              echo "Image not found yet, retrying in 5 seconds... ($RETRY_COUNT/$MAX_RETRIES)"
-              sleep 5
+            # Show progress every 30 seconds
+            if [ $((ELAPSED % 30)) -eq 0 ] && [ $ELAPSED -gt 0 ]; then
+              echo "Still waiting for image... (${ELAPSED}s elapsed, checking every 10s)"
             fi
+            
+            sleep $INTERVAL
+            ELAPSED=$((ELAPSED + INTERVAL))
           done
           
           if [ "$IMAGE_FOUND" != "true" ]; then
-            echo "ERROR: Image not found in registry after $MAX_RETRIES attempts!"
+            echo "ERROR: Image not found in registry after ${MAX_WAIT} seconds!"
             echo "Expected image: $IMAGE"
-            echo "Listing recent images:"
+            echo "Build ID: $BUILD_ID"
+            echo "Build URL: https://console.cloud.google.com/cloud-build/builds/$BUILD_ID?project=${PROJECT_ID}"
+            echo ""
+            echo "Listing recent images in registry:"
             gcloud artifacts docker images list \
               us-central1-docker.pkg.dev/${PROJECT_ID}/react-repo/react-frontend \
               --limit=10 \
               --format="table(package,version,tags)" || true
             exit 1
           fi
+          
+          echo "Image verification completed in ${ELAPSED} seconds"
 
       - name: Deploy to Cloud Run
         env:
