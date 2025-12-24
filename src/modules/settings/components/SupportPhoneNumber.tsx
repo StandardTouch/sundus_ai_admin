@@ -4,7 +4,6 @@ import * as Yup from "yup";
 import { Phone, Save, Loader2 } from "lucide-react";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { fetchSupportPhoneNumber, updateSupportPhoneNumberAction } from "../store";
-import { showError } from "@/lib/utils/toast";
 
 const phoneNumberSchema = Yup.object().shape({
   phone_number: Yup.string()

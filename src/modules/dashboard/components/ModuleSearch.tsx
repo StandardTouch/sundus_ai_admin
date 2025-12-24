@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { Search, X, ChevronDown } from "lucide-react";
+import { Search, X } from "lucide-react";
 import { sidebarItems } from "@/components/sidebar/sidebarConfig";
 import { useAppSelector } from "@/store/hooks";
 

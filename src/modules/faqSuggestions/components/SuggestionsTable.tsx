@@ -14,17 +14,6 @@ export default function SuggestionsTable({
   onApprove, 
   onReject
 }: SuggestionsTableProps) {
-  const formatDate = (dateString: string | null) => {
-    if (!dateString) return "Never";
-    return new Date(dateString).toLocaleDateString("en-US", {
-      year: "numeric",
-      month: "short",
-      day: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
-    });
-  };
-
   const formatDateShort = (dateString: string | null) => {
     if (!dateString) return "Never";
     return new Date(dateString).toLocaleDateString("en-US", {
@@ -36,12 +25,6 @@ export default function SuggestionsTable({
 
   const formatConfidenceScore = (score: number) => {
     return `${(score * 100).toFixed(1)}%`;
-  };
-
-  const truncateText = (text: string, maxLength: number = 100) => {
-    if (!text) return "—";
-    if (text.length <= maxLength) return text;
-    return text.substring(0, maxLength) + "...";
   };
 
   if (isLoading) {

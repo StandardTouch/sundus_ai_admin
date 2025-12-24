@@ -10,17 +10,6 @@ interface FaqsTableProps {
 }
 
 export default function FaqsTable({ faqs, isLoading, onEdit, onDelete, showArabic = false }: FaqsTableProps) {
-  const formatDate = (dateString: string | null) => {
-    if (!dateString) return "Never";
-    return new Date(dateString).toLocaleDateString("en-US", {
-      year: "numeric",
-      month: "short",
-      day: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
-    });
-  };
-
   const formatDateShort = (dateString: string | null) => {
     if (!dateString) return "Never";
     return new Date(dateString).toLocaleDateString("en-US", {

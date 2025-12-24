@@ -1,6 +1,5 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import { getAnalytics, type AnalyticsData } from "@/lib/api/analytics";
-import { showError } from "@/lib/utils/toast";
 
 export interface AnalyticsState {
   data: AnalyticsData | null;
