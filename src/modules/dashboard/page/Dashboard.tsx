@@ -5,6 +5,7 @@ import ResponseTimeChart from "../components/ResponseTimeChart";
 import RecentConversations from "../components/RecentConversations";
 import DashboardHeader from "../components/DashboardHeader";
 import SettingsModal from "../components/SettingsModal";
+import OpenAICreditBanner from "../components/OpenAICreditBanner";
 import { DashboardSkeleton } from "../components/shimmer";
 import { getDashboardData } from "@/lib/api/dashboard";
 import {
@@ -178,6 +179,9 @@ export default function Dashboard({ onMenuClick }: DashboardProps) {
   return (
     <main className="flex-1 p-4 sm:p-6 overflow-y-auto w-full lg:w-auto bg-[var(--admin-bg)] text-[var(--admin-text)]">
       <DashboardHeader onMenuClick={onMenuClick} onSettingsClick={() => setIsSettingsModalOpen(true)} />
+
+      {/* OpenAI Credit Status Banner */}
+      <OpenAICreditBanner />
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-6 sm:mb-10">

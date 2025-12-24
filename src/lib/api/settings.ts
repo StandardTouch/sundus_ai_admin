@@ -199,3 +199,59 @@ export async function updateTool(
   return response.data;
 }
 
+/**
+ * GET /api/settings/openai-credit-status
+ * Get OpenAI credit availability status
+ * 
+ * Headers:
+ * Authorization: Bearer <token> (admin or customer_support)
+ */
+export interface OpenAICreditStatus {
+  credits_available: boolean;
+  recharge_required: boolean;
+  last_updated?: string;
+}
+
+export interface GetOpenAICreditStatusResponse {
+  success: boolean;
+  data: OpenAICreditStatus;
+}
+
+export async function getOpenAICreditStatus(): Promise<GetOpenAICreditStatusResponse> {
+  const response = await apiClient.get<GetOpenAICreditStatusResponse>("/api/settings/openai-credit-status");
+  return response.data;
+}
+
+/**
+ * POST /api/whatsapp/send
+ * Send WhatsApp message via api.whatsapp
+ * 
+ * Headers:
+ * Authorization: Bearer <token> (admin or customer_support)
+ * 
+ * Request Body:
+ * {
+ *   "phone_number": "917676079163",
+ *   "message": "I need to recharge my openai credits for Sundus AI"
+ * }
+ */
+export interface SendWhatsAppMessageRequest {
+  phone_number: string;
+  message: string;
+}
+
+export interface SendWhatsAppMessageResponse {
+  success: boolean;
+  message?: string;
+}
+
+export async function sendWhatsAppMessage(
+  data: SendWhatsAppMessageRequest
+): Promise<SendWhatsAppMessageResponse> {
+  const response = await apiClient.post<SendWhatsAppMessageResponse>(
+    "/api/whatsapp/send",
+    data
+  );
+  return response.data;
+}
+
