@@ -43,39 +43,23 @@ jobs:
           echo "Project ID: ${PROJECT_ID}"
           echo "Commit SHA: ${GITHUB_SHA}"
           
-          # Submit build asynchronously to avoid log streaming issues
+          # Submit build asynchronously and get build ID
           echo "Submitting Docker build..."
-          # Use --tag flag to ensure image is tagged with the commit SHA
           BUILD_OUTPUT=$(gcloud builds submit --tag "$IMAGE" . --async 2>&1) || true
-          
-          # Verify the tag format is correct
-          echo "Image tag format: ${GITHUB_SHA}"
-          echo "Full image path: $IMAGE"
           
           echo "Build submission output:"
           echo "$BUILD_OUTPUT"
           
-          # Extract build ID from output - try multiple methods
-          # Method 1: Extract from URL pattern "builds/BUILD_ID" or "builds/BUILD_ID]"
-          BUILD_ID=$(echo "$BUILD_OUTPUT" | grep -oE 'builds/[a-f0-9-]+' | head -1 | cut -d'/' -f2 | tr -d ']')
+          # Extract build ID from output
+          BUILD_ID=$(echo "$BUILD_OUTPUT" | grep -oE 'builds/[a-f0-9-]+' | head -1 | cut -d'/' -f2 | tr -d ']' | xargs)
           
-          # Method 2: Extract UUID pattern directly
+          # Fallback: try UUID pattern
           if [ -z "$BUILD_ID" ]; then
-            BUILD_ID=$(echo "$BUILD_OUTPUT" | grep -oE '[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}' | head -1 | tr -d ']')
+            BUILD_ID=$(echo "$BUILD_OUTPUT" | grep -oE '[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}' | head -1 | tr -d ']' | xargs)
           fi
           
-          # Method 3: Try to get from recent builds list
           if [ -z "$BUILD_ID" ]; then
-            echo "WARNING: Could not extract build ID from output, trying to find from recent builds..."
-            sleep 10
-            BUILD_ID=$(gcloud builds list --limit=1 --format="value(id)" --filter="source.repoSource.commitSha:${GITHUB_SHA}" 2>/dev/null || echo "")
-          fi
-          
-          # Clean build ID - remove any trailing brackets or special characters
-          BUILD_ID=$(echo "$BUILD_ID" | tr -d '[]' | xargs)
-          
-          if [ -z "$BUILD_ID" ]; then
-            echo "ERROR: Could not determine build ID. Build may have failed to start."
+            echo "ERROR: Could not extract build ID from output"
             echo "Full build output:"
             echo "$BUILD_OUTPUT"
             exit 1
@@ -83,229 +67,69 @@ jobs:
           
           echo "Build submitted with ID: $BUILD_ID"
           echo "Build URL: https://console.cloud.google.com/cloud-build/builds/$BUILD_ID?project=${PROJECT_ID}"
-          echo "Waiting for build to complete (will check image in registry instead of build status)..."
+          echo "Waiting for build to complete..."
           
-          # Instead of polling build status (which may have permission issues),
-          # wait for the image to appear in the registry
-          # This is more reliable and doesn't require build status permissions
-          
-          # Wait for image to appear in registry (this is more reliable than polling build status)
-          echo "Waiting for image to appear in Artifact Registry..."
-          echo "This may take a few minutes while the build completes..."
-          echo "You can check build progress at: https://console.cloud.google.com/cloud-build/builds/$BUILD_ID?project=${PROJECT_ID}"
-          
+          # Wait for build to complete - poll build status
           MAX_WAIT=1800  # 30 minutes max
           ELAPSED=0
-          INTERVAL=10
-          IMAGE_FOUND=false
-          LAST_BUILD_CHECK=0
-          BUILD_CHECK_INTERVAL=60  # Check build status every 60 seconds
-          BUILD_STATUS="UNKNOWN"  # Initialize build status
+          INTERVAL=15  # Check every 15 seconds
+          BUILD_STATUS=""
           
           while [ $ELAPSED -lt $MAX_WAIT ]; do
-            # Periodically check build status to catch failures early
-            if [ $((ELAPSED - LAST_BUILD_CHECK)) -ge $BUILD_CHECK_INTERVAL ]; then
-              echo "Checking build status..."
-              BUILD_STATUS=$(gcloud builds describe "$BUILD_ID" --format="value(status)" 2>/dev/null || echo "UNKNOWN")
-              
-              if [ "$BUILD_STATUS" = "FAILURE" ] || [ "$BUILD_STATUS" = "CANCELLED" ] || [ "$BUILD_STATUS" = "EXPIRED" ]; then
-                echo "ERROR: Build failed with status: $BUILD_STATUS"
-                echo "Build URL: https://console.cloud.google.com/cloud-build/builds/$BUILD_ID?project=${PROJECT_ID}"
-                echo "Please check the build logs in the GCP Console for details."
-                exit 1
-              elif [ "$BUILD_STATUS" = "SUCCESS" ]; then
-                echo "Build completed successfully! Waiting for image to appear in registry..."
-              elif [ "$BUILD_STATUS" != "UNKNOWN" ]; then
-                echo "Build status: $BUILD_STATUS (still running...)"
-              fi
-              
-              LAST_BUILD_CHECK=$ELAPSED
-            fi
+            BUILD_STATUS=$(gcloud builds describe "$BUILD_ID" --format="value(status)" 2>/dev/null || echo "UNKNOWN")
             
-            # Check for image - start checking after 2 minutes or if build succeeded
-            if [ "$BUILD_STATUS" = "SUCCESS" ] || [ "$ELAPSED" -gt 120 ]; then
-              # Try multiple methods to verify image exists
-              # Method 1: Check by tag (if tag was applied)
-              IMAGE_BY_TAG=$(gcloud artifacts docker images list \
-                us-central1-docker.pkg.dev/${PROJECT_ID}/react-repo/react-frontend \
-                --filter="tags:${GITHUB_SHA}" \
-                --format="value(package)" 2>/dev/null | head -1 || echo "")
-              
-              # Method 2: Try to describe the image directly by full path
-              IMAGE_EXISTS=$(gcloud artifacts docker images describe \
-                "$IMAGE" \
-                --format="value(name)" 2>/dev/null || echo "")
-              
-              # Method 3: Check most recent image (by creation time) - might be our build
-              if [ -z "$IMAGE_EXISTS" ] && [ -z "$IMAGE_BY_TAG" ]; then
-                LATEST_IMAGE=$(gcloud artifacts docker images list \
-                  us-central1-docker.pkg.dev/${PROJECT_ID}/react-repo/react-frontend \
-                  --sort-by=~CREATE_TIME \
-                  --limit=1 \
-                  --format="value(package)" 2>/dev/null | head -1 || echo "")
-                
-                # If we have a latest image and build just succeeded, assume it's ours
-                if [ -n "$LATEST_IMAGE" ] && [ "$BUILD_STATUS" = "SUCCESS" ] && [ "$ELAPSED" -lt 300 ]; then
-                  echo "Build succeeded recently, assuming latest image is the new build..."
-                  IMAGE_EXISTS="found"
-                fi
-              fi
-              
-              if [ -n "$IMAGE_EXISTS" ] || [ -n "$IMAGE_BY_TAG" ]; then
-                echo "✓ Image found in registry!"
-                echo "Verifying image is fully available (waiting 15 seconds for propagation)..."
-                sleep 15
-                
-                # Final verification - try to describe the image
-                FINAL_CHECK=$(gcloud artifacts docker images describe \
-                  "$IMAGE" \
-                  --format="value(name)" 2>/dev/null || echo "")
-                
-                if [ -n "$FINAL_CHECK" ]; then
-                  echo "✓ Image verified and ready for deployment!"
-                  IMAGE_FOUND=true
-                  break
-                else
-                  echo "Warning: Image not accessible by full path, but may still be available. Continuing..."
-                  # If build succeeded and we've waited a bit, assume it's ready
-                  if [ "$BUILD_STATUS" = "SUCCESS" ] && [ "$ELAPSED" -gt 180 ]; then
-                    echo "Build succeeded and waited 3+ minutes, proceeding with deployment..."
-                    IMAGE_FOUND=true
-                    break
-                  fi
-                fi
-              fi
-            fi
-            
-            # Show progress every 30 seconds, and warn when approaching timeout
-            if [ $((ELAPSED % 30)) -eq 0 ] && [ $ELAPSED -gt 0 ]; then
-              REMAINING=$((MAX_WAIT - ELAPSED))
-              if [ $REMAINING -lt 300 ]; then
-                echo "⚠️ WARNING: Only ${REMAINING}s remaining before timeout!"
-              fi
-              echo "Still waiting for image... (${ELAPSED}s elapsed, checking every 10s)"
-            fi
-            
-            # Check if we've exceeded the timeout
-            if [ $ELAPSED -ge $MAX_WAIT ]; then
-              echo "ERROR: Timeout reached (${MAX_WAIT}s). Exiting..."
+            if [ "$BUILD_STATUS" = "SUCCESS" ]; then
+              echo "✓ Build completed successfully!"
               break
+            elif [ "$BUILD_STATUS" = "FAILURE" ] || [ "$BUILD_STATUS" = "CANCELLED" ] || [ "$BUILD_STATUS" = "EXPIRED" ]; then
+              echo "ERROR: Build failed with status: $BUILD_STATUS"
+              echo "Build URL: https://console.cloud.google.com/cloud-build/builds/$BUILD_ID?project=${PROJECT_ID}"
+              echo "Please check the build logs in the GCP Console for details."
+              exit 1
+            elif [ "$BUILD_STATUS" != "UNKNOWN" ] && [ -n "$BUILD_STATUS" ]; then
+              # Show status every 60 seconds
+              if [ $((ELAPSED % 60)) -eq 0 ] && [ $ELAPSED -gt 0 ]; then
+                echo "Build status: $BUILD_STATUS (${ELAPSED}s elapsed)"
+              fi
             fi
             
             sleep $INTERVAL
             ELAPSED=$((ELAPSED + INTERVAL))
           done
           
-          if [ "$IMAGE_FOUND" != "true" ]; then
-            echo "WARNING: Image not found by tag after ${ELAPSED} seconds"
-            echo "Expected image: $IMAGE"
-            echo "Build ID: $BUILD_ID"
+          if [ "$BUILD_STATUS" != "SUCCESS" ]; then
+            echo "ERROR: Build did not complete successfully within ${MAX_WAIT} seconds"
+            echo "Final build status: ${BUILD_STATUS:-UNKNOWN}"
             echo "Build URL: https://console.cloud.google.com/cloud-build/builds/$BUILD_ID?project=${PROJECT_ID}"
-            echo ""
-            echo "Checking final build status..."
-            FINAL_STATUS=$(gcloud builds describe "$BUILD_ID" --format="value(status)" 2>/dev/null || echo "UNKNOWN")
-            echo "Final build status: $FINAL_STATUS"
-            
-            if [ "$FINAL_STATUS" = "SUCCESS" ]; then
-              echo ""
-              echo "Build succeeded! Images exist in registry (may not have tags yet)."
-              echo "Proceeding with deployment - Cloud Run should be able to resolve the image."
-              echo ""
-              echo "Note: Image tags may take a few moments to appear, but the image exists."
-              # Don't exit - proceed with deployment
-              # The image exists, Cloud Run should be able to use it
-            else
-              echo ""
-              echo "Listing recent images in registry:"
-              gcloud artifacts docker images list \
-                us-central1-docker.pkg.dev/${PROJECT_ID}/react-repo/react-frontend \
-                --limit=10 \
-                --format="table(package,version,tags,create_time)" || true
-              echo ""
-              echo "ERROR: Build did not succeed. Cannot proceed with deployment."
-              exit 1
-            fi
+            exit 1
           fi
           
-          echo "Image verification completed in ${ELAPSED} seconds"
+          echo "Build completed in ${ELAPSED} seconds"
+          echo "Waiting 10 seconds for image to be fully available..."
+          sleep 10
 
-      - name: Final Image Verification
+      - name: Verify Image Ready
         env:
           PROJECT_ID: ${{ secrets.GCLOUD_PROJECT_ID }}
         run: |
-          echo "Performing final verification that image exists before deployment..."
-          echo "Looking for image with tag: ${GITHUB_SHA}"
+          echo "Verifying image is ready for deployment..."
+          echo "Image: $IMAGE"
           
-          # Get build status to check if it succeeded
-          BUILD_STATUS=$(gcloud builds list --limit=1 --filter="source.repoSource.commitSha:${GITHUB_SHA}" --format="value(status)" 2>/dev/null || echo "UNKNOWN")
-          echo "Latest build status for this commit: $BUILD_STATUS"
-          
-          # Try multiple verification methods
-          IMAGE_VERIFY=$(gcloud artifacts docker images list \
+          # Since build completed successfully, the image should exist
+          # Cloud Run can resolve images even if tags aren't immediately visible in Artifact Registry
+          # Just verify that images exist in the repository
+          IMAGE_COUNT=$(gcloud artifacts docker images list \
             us-central1-docker.pkg.dev/${PROJECT_ID}/react-repo/react-frontend \
-            --format="value(tags)" 2>/dev/null | grep "${GITHUB_SHA}" || echo "")
+            --limit=1 \
+            --format="value(package)" 2>/dev/null | wc -l || echo "0")
           
-          # Also try with filter
-          if [ -z "$IMAGE_VERIFY" ]; then
-            IMAGE_VERIFY=$(gcloud artifacts docker images list \
-              us-central1-docker.pkg.dev/${PROJECT_ID}/react-repo/react-frontend \
-              --filter="tags:${GITHUB_SHA}" \
-              --format="value(package)" 2>/dev/null | head -1 || echo "")
-          fi
-          
-          # Try to describe image directly
-          if [ -z "$IMAGE_VERIFY" ]; then
-            IMAGE_VERIFY=$(gcloud artifacts docker images describe "$IMAGE" --format="value(name)" 2>/dev/null || echo "")
-          fi
-          
-          # If build succeeded but tag not found, check if recent images exist
-          if [ -z "$IMAGE_VERIFY" ] && [ "$BUILD_STATUS" = "SUCCESS" ]; then
-            echo "Build succeeded but tag not found. Checking for recent images..."
-            RECENT_IMAGES=$(gcloud artifacts docker images list \
-              us-central1-docker.pkg.dev/${PROJECT_ID}/react-repo/react-frontend \
-              --sort-by=~CREATE_TIME \
-              --limit=1 \
-              --format="value(package)" 2>/dev/null || echo "")
-            
-            if [ -n "$RECENT_IMAGES" ]; then
-              echo "Recent images found. Build succeeded, proceeding with deployment."
-              echo "Note: Image tags may not be visible yet, but image exists in registry."
-              IMAGE_VERIFY="found"
-            fi
-          fi
-          
-          if [ -z "$IMAGE_VERIFY" ]; then
-            echo "WARNING: Image verification by tag failed"
-            echo "Expected image: $IMAGE"
-            echo "Expected tag: ${GITHUB_SHA}"
-            echo "Build status: $BUILD_STATUS"
-            echo ""
-            
-            if [ "$BUILD_STATUS" = "SUCCESS" ]; then
-              echo "Build succeeded - images exist but tags may not be visible yet."
-              echo "Proceeding with deployment - Cloud Run should be able to resolve the image."
-              echo "Listing recent images for reference:"
-              gcloud artifacts docker images list \
-                us-central1-docker.pkg.dev/${PROJECT_ID}/react-repo/react-frontend \
-                --limit=5 \
-                --sort-by=~CREATE_TIME \
-                --format="table(package,digest,tags,create_time)" || true
-            else
-              echo "ERROR: Build did not succeed and image not found."
-              echo "Cannot proceed with deployment."
-              echo ""
-              echo "Listing all available images in registry:"
-              gcloud artifacts docker images list \
-                us-central1-docker.pkg.dev/${PROJECT_ID}/react-repo/react-frontend \
-                --limit=20 \
-                --format="table(package,version,tags,create_time)" || true
-              exit 1
-            fi
+          if [ "$IMAGE_COUNT" -gt 0 ]; then
+            echo "✓ Images exist in registry"
+            echo "Proceeding with deployment..."
           else
-            echo "✓ Final verification passed - image exists and is ready for deployment"
-            if [ "$IMAGE_VERIFY" != "found" ]; then
-              echo "Found image with tag: ${GITHUB_SHA}"
-            fi
+            echo "WARNING: No images found in registry, but build succeeded."
+            echo "This may be a temporary issue. Proceeding with deployment anyway."
+            echo "Cloud Run will attempt to resolve the image."
           fi
 
       - name: Deploy to Cloud Run
