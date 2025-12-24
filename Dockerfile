@@ -5,7 +5,7 @@ COPY package*.json ./
 RUN npm install
 COPY . .
 
-# Build (env gets injected here)
+# Build (env gets injected here)s
 RUN npm run build
 
 FROM nginx:alpine
