@@ -86,23 +86,62 @@ jobs:
           # Wait for image to appear in registry (this is more reliable than polling build status)
           echo "Waiting for image to appear in Artifact Registry..."
           echo "This may take a few minutes while the build completes..."
+          echo "You can check build progress at: https://console.cloud.google.com/cloud-build/builds/$BUILD_ID?project=${PROJECT_ID}"
           
           MAX_WAIT=1800  # 30 minutes max
           ELAPSED=0
           INTERVAL=10
           IMAGE_FOUND=false
+          LAST_BUILD_CHECK=0
+          BUILD_CHECK_INTERVAL=60  # Check build status every 60 seconds
+          BUILD_STATUS="UNKNOWN"  # Initialize build status
           
           while [ $ELAPSED -lt $MAX_WAIT ]; do
-            # Check if image exists
-            IMAGE_LIST=$(gcloud artifacts docker images list \
-              us-central1-docker.pkg.dev/${PROJECT_ID}/react-repo/react-frontend \
-              --filter="tags:${GITHUB_SHA}" \
-              --format="value(tags)" 2>/dev/null || echo "")
+            # Periodically check build status to catch failures early
+            if [ $((ELAPSED - LAST_BUILD_CHECK)) -ge $BUILD_CHECK_INTERVAL ]; then
+              echo "Checking build status..."
+              BUILD_STATUS=$(gcloud builds describe "$BUILD_ID" --format="value(status)" 2>/dev/null || echo "UNKNOWN")
+              
+              if [ "$BUILD_STATUS" = "FAILURE" ] || [ "$BUILD_STATUS" = "CANCELLED" ] || [ "$BUILD_STATUS" = "EXPIRED" ]; then
+                echo "ERROR: Build failed with status: $BUILD_STATUS"
+                echo "Build URL: https://console.cloud.google.com/cloud-build/builds/$BUILD_ID?project=${PROJECT_ID}"
+                echo "Please check the build logs in the GCP Console for details."
+                exit 1
+              elif [ "$BUILD_STATUS" = "SUCCESS" ]; then
+                echo "Build completed successfully! Waiting for image to appear in registry..."
+              elif [ "$BUILD_STATUS" != "UNKNOWN" ]; then
+                echo "Build status: $BUILD_STATUS (still running...)"
+              fi
+              
+              LAST_BUILD_CHECK=$ELAPSED
+            fi
             
-            if echo "$IMAGE_LIST" | grep -q "${GITHUB_SHA}"; then
-              echo "✓ Image found in registry!"
-              IMAGE_FOUND=true
-              break
+            # Check for image - start checking after 2 minutes or if build succeeded
+            if [ "$BUILD_STATUS" = "SUCCESS" ] || [ "$ELAPSED" -gt 120 ]; then
+              # Check if image exists - use the same approach as the old working version
+              # List all images and grep for the SHA tag
+              IMAGE_LIST=$(gcloud artifacts docker images list \
+                us-central1-docker.pkg.dev/${PROJECT_ID}/react-repo/react-frontend \
+                --format="value(tags)" 2>/dev/null | grep "${GITHUB_SHA}" || echo "")
+              
+              if [ -n "$IMAGE_LIST" ]; then
+                echo "✓ Image found in registry!"
+                echo "Verifying image is fully available (waiting 15 seconds for propagation)..."
+                sleep 15
+                
+                # Double-check the image is still there and accessible
+                VERIFY_CHECK=$(gcloud artifacts docker images list \
+                  us-central1-docker.pkg.dev/${PROJECT_ID}/react-repo/react-frontend \
+                  --format="value(tags)" 2>/dev/null | grep "${GITHUB_SHA}" || echo "")
+                
+                if [ -n "$VERIFY_CHECK" ]; then
+                  echo "✓ Image verified and ready for deployment!"
+                  IMAGE_FOUND=true
+                  break
+                else
+                  echo "Warning: Image disappeared during verification, continuing to wait..."
+                fi
+              fi
             fi
             
             # Show progress every 30 seconds
@@ -120,6 +159,10 @@ jobs:
             echo "Build ID: $BUILD_ID"
             echo "Build URL: https://console.cloud.google.com/cloud-build/builds/$BUILD_ID?project=${PROJECT_ID}"
             echo ""
+            echo "Checking final build status..."
+            FINAL_STATUS=$(gcloud builds describe "$BUILD_ID" --format="value(status)" 2>/dev/null || echo "UNKNOWN")
+            echo "Final build status: $FINAL_STATUS"
+            echo ""
             echo "Listing recent images in registry:"
             gcloud artifacts docker images list \
               us-central1-docker.pkg.dev/${PROJECT_ID}/react-repo/react-frontend \
@@ -130,17 +173,64 @@ jobs:
           
           echo "Image verification completed in ${ELAPSED} seconds"
 
+      - name: Final Image Verification
+        env:
+          PROJECT_ID: ${{ secrets.GCLOUD_PROJECT_ID }}
+        run: |
+          echo "Performing final verification that image exists before deployment..."
+          echo "Looking for image with tag: ${GITHUB_SHA}"
+          
+          # Try multiple verification methods
+          IMAGE_VERIFY=$(gcloud artifacts docker images list \
+            us-central1-docker.pkg.dev/${PROJECT_ID}/react-repo/react-frontend \
+            --format="value(tags)" 2>/dev/null | grep "${GITHUB_SHA}" || echo "")
+          
+          # Also try with filter
+          if [ -z "$IMAGE_VERIFY" ]; then
+            IMAGE_VERIFY=$(gcloud artifacts docker images list \
+              us-central1-docker.pkg.dev/${PROJECT_ID}/react-repo/react-frontend \
+              --filter="tags:${GITHUB_SHA}" \
+              --format="value(package)" 2>/dev/null | head -1 || echo "")
+          fi
+          
+          if [ -z "$IMAGE_VERIFY" ]; then
+            echo "ERROR: Image verification failed! Image not found in registry."
+            echo "Expected image: $IMAGE"
+            echo "Expected tag: ${GITHUB_SHA}"
+            echo ""
+            echo "This should not happen - the previous step should have caught this."
+            echo "Listing all available images in registry:"
+            gcloud artifacts docker images list \
+              us-central1-docker.pkg.dev/${PROJECT_ID}/react-repo/react-frontend \
+              --limit=20 \
+              --format="table(package,version,tags,create_time)" || true
+            echo ""
+            echo "Checking if repository exists:"
+            gcloud artifacts repositories describe react-repo \
+              --location=us-central1 \
+              --format="value(name)" || echo "Repository check failed"
+            exit 1
+          fi
+          
+          echo "✓ Final verification passed - image exists and is ready for deployment"
+          echo "Found image with tag: ${GITHUB_SHA}"
+
       - name: Deploy to Cloud Run
         env:
           REGION: ${{ secrets.REGION }}
         run: |
           echo "Deploying to Cloud Run..."
+          echo "Deploying image: $IMAGE"
+          
+          # Deploy with explicit image verification
           gcloud run deploy react-frontend \
             --image="$IMAGE" \
             --region="${REGION}" \
             --platform=managed \
-            --allow-unauthenticated
-          echo "Deployment completed."
+            --allow-unauthenticated \
+            --quiet
+          
+          echo "Deployment completed successfully!"
 
       - name: Show Cloud Run URL
         env:
