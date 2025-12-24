@@ -42,18 +42,72 @@ jobs:
           echo "Project ID: ${PROJECT_ID}"
           echo "Commit SHA: ${GITHUB_SHA}"
           
-          # Build and push synchronously - wait for completion
-          echo "Starting Docker build..."
-          if ! gcloud builds submit --tag "$IMAGE" .; then
-            echo "ERROR: Docker build failed!"
-            exit 1
+          # Submit build asynchronously to avoid log streaming issues
+          echo "Submitting Docker build..."
+          BUILD_OUTPUT=$(gcloud builds submit --tag "$IMAGE" . --async 2>&1) || true
+          
+          # Extract build ID from output (format: "Created [https://cloudbuild.googleapis.com/v1/projects/.../builds/BUILD_ID]")
+          # Try multiple patterns to extract build ID
+          BUILD_ID=$(echo "$BUILD_OUTPUT" | grep -o 'builds/[^/?]\+' | head -1 | cut -d'/' -f2)
+          
+          # Alternative: extract from the full URL pattern
+          if [ -z "$BUILD_ID" ]; then
+            BUILD_ID=$(echo "$BUILD_OUTPUT" | grep -o 'builds/[a-f0-9-]\+' | head -1 | sed 's/builds\///')
           fi
           
-          echo "Build completed successfully!"
+          if [ -z "$BUILD_ID" ]; then
+            echo "WARNING: Could not extract build ID from output"
+            echo "Build output: $BUILD_OUTPUT"
+            echo "Trying to find build ID from recent builds..."
+            # Try to find the build by checking recent builds
+            sleep 10
+            BUILD_ID=$(gcloud builds list --limit=1 --format="value(id)" --filter="source.repoSource.commitSha:${GITHUB_SHA}" 2>/dev/null || echo "")
+            
+            if [ -z "$BUILD_ID" ]; then
+              echo "ERROR: Could not determine build ID. Build may have failed to start."
+              exit 1
+            fi
+            echo "Found build ID: $BUILD_ID"
+          else
+            echo "Build submitted with ID: $BUILD_ID"
+            echo "Waiting for build to complete..."
+            
+            # Poll for build status
+            MAX_WAIT=1800  # 30 minutes max
+            ELAPSED=0
+            INTERVAL=10
+            
+            while [ $ELAPSED -lt $MAX_WAIT ]; do
+              STATUS=$(gcloud builds describe "$BUILD_ID" --format="value(status)" 2>/dev/null || echo "UNKNOWN")
+              
+              if [ "$STATUS" = "SUCCESS" ]; then
+                echo "Build completed successfully!"
+                break
+              elif [ "$STATUS" = "FAILURE" ] || [ "$STATUS" = "CANCELLED" ] || [ "$STATUS" = "EXPIRED" ]; then
+                echo "ERROR: Build failed with status: $STATUS"
+                echo "Build logs: https://console.cloud.google.com/cloud-build/builds/$BUILD_ID?project=${PROJECT_ID}"
+                exit 1
+              elif [ "$STATUS" = "UNKNOWN" ]; then
+                echo "WARNING: Could not get build status, waiting..."
+              else
+                echo "Build status: $STATUS (waiting...)"
+              fi
+              
+              sleep $INTERVAL
+              ELAPSED=$((ELAPSED + INTERVAL))
+            done
+            
+            if [ $ELAPSED -ge $MAX_WAIT ]; then
+              echo "ERROR: Build timed out after $MAX_WAIT seconds"
+              echo "Build ID: $BUILD_ID"
+              echo "Check build status: https://console.cloud.google.com/cloud-build/builds/$BUILD_ID?project=${PROJECT_ID}"
+              exit 1
+            fi
+          fi
           
           # Verify image exists with retry logic
           echo "Verifying image exists in Artifact Registry..."
-          MAX_RETRIES=5
+          MAX_RETRIES=10
           RETRY_COUNT=0
           IMAGE_FOUND=false
           
