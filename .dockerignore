@@ -14,8 +14,9 @@ dist-ssr
 .env
 .env.local
 .env.*.local
-.env.production
-.env.development
+# Note: .env.production is NOT excluded - it's needed for production builds in CI/CD
+# .env.production is intentionally included in Docker builds (created by GitHub Actions)
+# .env.development
 
 # Git
 .git
