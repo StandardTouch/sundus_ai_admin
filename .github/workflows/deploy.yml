@@ -38,26 +38,54 @@ jobs:
         run: |
           IMAGE="us-central1-docker.pkg.dev/${PROJECT_ID}/react-repo/react-frontend:${GITHUB_SHA}"
           echo "IMAGE=$IMAGE" >> $GITHUB_ENV
-          echo "Submitting Cloud Build job for $IMAGE"
-
-          # Use async build because log streaming is blocked
-          gcloud builds submit --tag "$IMAGE" . --async
-
-      - name: Wait for image to become available
-        env:
-          PROJECT_ID: ${{ secrets.GCLOUD_PROJECT_ID }}
-        run: |
-          echo "Waiting for image to appear in Artifact Registry..."
-          for i in {1..60}; do
-            gcloud artifacts docker images list \
-              us-central1-docker.pkg.dev/${PROJECT_ID}/react-repo \
-              --format="get(version)" | grep -q "${GITHUB_SHA}" && {
-                echo "Image found!"
-                break
-              }
-            echo "Image not ready yet... retrying ($i/60)"
-            sleep 5
+          echo "Building and pushing Docker image: $IMAGE"
+          echo "Project ID: ${PROJECT_ID}"
+          echo "Commit SHA: ${GITHUB_SHA}"
+          
+          # Build and push synchronously - wait for completion
+          echo "Starting Docker build..."
+          if ! gcloud builds submit --tag "$IMAGE" .; then
+            echo "ERROR: Docker build failed!"
+            exit 1
+          fi
+          
+          echo "Build completed successfully!"
+          
+          # Verify image exists with retry logic
+          echo "Verifying image exists in Artifact Registry..."
+          MAX_RETRIES=5
+          RETRY_COUNT=0
+          IMAGE_FOUND=false
+          
+          while [ $RETRY_COUNT -lt $MAX_RETRIES ]; do
+            IMAGE_LIST=$(gcloud artifacts docker images list \
+              us-central1-docker.pkg.dev/${PROJECT_ID}/react-repo/react-frontend \
+              --filter="tags:${GITHUB_SHA}" \
+              --format="value(tags)" 2>/dev/null || echo "")
+            
+            if echo "$IMAGE_LIST" | grep -q "${GITHUB_SHA}"; then
+              echo "Image verified successfully!"
+              IMAGE_FOUND=true
+              break
+            fi
+            
+            RETRY_COUNT=$((RETRY_COUNT + 1))
+            if [ $RETRY_COUNT -lt $MAX_RETRIES ]; then
+              echo "Image not found yet, retrying in 5 seconds... ($RETRY_COUNT/$MAX_RETRIES)"
+              sleep 5
+            fi
           done
+          
+          if [ "$IMAGE_FOUND" != "true" ]; then
+            echo "ERROR: Image not found in registry after $MAX_RETRIES attempts!"
+            echo "Expected image: $IMAGE"
+            echo "Listing recent images:"
+            gcloud artifacts docker images list \
+              us-central1-docker.pkg.dev/${PROJECT_ID}/react-repo/react-frontend \
+              --limit=10 \
+              --format="table(package,version,tags)" || true
+            exit 1
+          fi
 
       - name: Deploy to Cloud Run
         env:
