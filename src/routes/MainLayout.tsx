@@ -11,10 +11,11 @@ import { Users } from "@/modules/users";
 import { Faqs } from "@/modules/faqs";
 import { Suggestions } from "@/modules/faqSuggestions";
 import { Settings } from "@/modules/settings";
+import { Locations } from "@/modules/locations";
 import { MobileMenuOverlay } from "@/components/layout";
 import { useAppSelector } from "@/store/hooks";
 
-type Page = "dashboard" | "conversations" | "analytics" | "users" | "faqs" | "suggestions" | "settings";
+type Page = "dashboard" | "conversations" | "analytics" | "users" | "faqs" | "suggestions" | "settings" | "locations";
 
 export function MainLayout() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -39,6 +40,7 @@ export function MainLayout() {
     if (path === "/faqs") return "faqs";
     if (path === "/suggestions") return "suggestions";
     if (path === "/settings") return "settings";
+    if (path === "/locations") return "locations";
     return "dashboard";
   };
 
@@ -50,77 +52,85 @@ export function MainLayout() {
   return (
     <div className="min-h-screen flex bg-[var(--admin-bg)] text-[var(--admin-text)]">
       <MobileMenuOverlay isOpen={isMobileMenuOpen} onClose={handleMenuClose} />
-      <Sidebar 
-        isOpen={isMobileMenuOpen} 
+      <Sidebar
+        isOpen={isMobileMenuOpen}
         onClose={handleMenuClose}
         currentPage={currentPage}
       />
       <div className="flex-1 lg:ml-64">
         <Routes>
           <Route path="/" element={<Navigate to={defaultPath} replace />} />
-          <Route 
-            path="/dashboard" 
+          <Route
+            path="/dashboard"
             element={
               <ProtectedRoute allowedRoles={["admin"]}>
                 <Dashboard onMenuClick={handleMenuToggle} />
               </ProtectedRoute>
-            } 
+            }
           />
-          <Route 
-            path="/conversations" 
+          <Route
+            path="/conversations"
             element={
               <ProtectedRoute allowedRoles={["admin"]}>
                 <Conversations />
               </ProtectedRoute>
-            } 
+            }
           />
-          <Route 
-            path="/conversations/:id" 
+          <Route
+            path="/conversations/:id"
             element={
               <ProtectedRoute allowedRoles={["admin"]}>
                 <ConversationDetail />
               </ProtectedRoute>
-            } 
+            }
           />
-          <Route 
-            path="/analytics" 
+          <Route
+            path="/analytics"
             element={
               <ProtectedRoute allowedRoles={["admin"]}>
                 <Analytics />
               </ProtectedRoute>
-            } 
+            }
           />
-          <Route 
-            path="/users" 
+          <Route
+            path="/users"
             element={
               <ProtectedRoute allowedRoles={["admin"]}>
                 <Users />
               </ProtectedRoute>
-            } 
+            }
           />
-          <Route 
-            path="/faqs" 
+          <Route
+            path="/faqs"
             element={
               <ProtectedRoute allowedRoles={["admin", "customer_support"]}>
                 <Faqs />
               </ProtectedRoute>
-            } 
+            }
           />
-          <Route 
-            path="/suggestions" 
+          <Route
+            path="/suggestions"
             element={
               <ProtectedRoute allowedRoles={["admin", "customer_support"]}>
                 <Suggestions />
               </ProtectedRoute>
-            } 
+            }
           />
-          <Route 
-            path="/settings" 
+          <Route
+            path="/settings"
             element={
               <ProtectedRoute allowedRoles={["admin"]}>
                 <Settings />
               </ProtectedRoute>
-            } 
+            }
+          />
+          <Route
+            path="/locations"
+            element={
+              <ProtectedRoute allowedRoles={["admin"]}>
+                <Locations />
+              </ProtectedRoute>
+            }
           />
         </Routes>
       </div>

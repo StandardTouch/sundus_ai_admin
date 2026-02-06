@@ -7,7 +7,7 @@ import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { logoutUser } from "@/modules/auth/store";
 import { showSuccess } from "@/lib/utils/toast";
 
-type Page = "dashboard" | "conversations" | "analytics" | "users" | "faqs" | "suggestions" | "settings";
+type Page = "dashboard" | "conversations" | "analytics" | "users" | "faqs" | "suggestions" | "settings" | "locations";
 
 interface SidebarProps {
   isOpen: boolean;
@@ -40,9 +40,8 @@ export default function Sidebar({ isOpen, onClose, currentPage }: SidebarProps) 
 
   return (
     <aside
-      className={`fixed inset-y-0 left-0 z-50 w-64 border-r border-[var(--admin-border)] flex flex-col transform transition-transform duration-300 ease-in-out ${
-        isOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
-      }`}
+      className={`fixed inset-y-0 left-0 z-50 w-64 border-r border-[var(--admin-border)] flex flex-col transform transition-transform duration-300 ease-in-out ${isOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
+        }`}
       style={{
         backgroundColor: theme === "dark" ? "#000000" : "#ffffff",
         height: "100vh",
@@ -53,9 +52,9 @@ export default function Sidebar({ isOpen, onClose, currentPage }: SidebarProps) 
         <div className="flex-shrink-0">
           <div className="flex items-center justify-between mb-10 relative">
             <Link to={user?.role === "customer_support" ? "/faqs" : "/dashboard"} className="flex items-center justify-center w-full">
-              <img 
-                src={logoSrc} 
-                alt="Logo" 
+              <img
+                src={logoSrc}
+                alt="Logo"
                 className="w-full h-auto"
               />
             </Link>
@@ -78,13 +77,14 @@ export default function Sidebar({ isOpen, onClose, currentPage }: SidebarProps) 
                 "FAQs": "faqs",
                 "FAQ Suggestions": "suggestions",
                 "Settings": "settings",
+                "Locations": "locations",
               };
               const itemPage = pageMap[item.label] as Page;
               const path = item.path || "/";
               return (
                 <Link key={i} to={path} onClick={onClose}>
-                  <SidebarItem 
-                    {...item} 
+                  <SidebarItem
+                    {...item}
                     isActive={activePage === itemPage}
                   />
                 </Link>
