@@ -71,7 +71,7 @@ export function MainLayout() {
           <Route
             path="/conversations"
             element={
-              <ProtectedRoute allowedRoles={["admin"]}>
+              <ProtectedRoute allowedRoles={["admin", "customer_support"]}>
                 <Conversations />
               </ProtectedRoute>
             }
@@ -79,7 +79,7 @@ export function MainLayout() {
           <Route
             path="/conversations/:id"
             element={
-              <ProtectedRoute allowedRoles={["admin"]}>
+              <ProtectedRoute allowedRoles={["admin", "customer_support"]}>
                 <ConversationDetail />
               </ProtectedRoute>
             }
@@ -87,7 +87,7 @@ export function MainLayout() {
           <Route
             path="/analytics"
             element={
-              <ProtectedRoute allowedRoles={["admin"]}>
+              <ProtectedRoute allowedRoles={["admin", "customer_support"]}>
                 <Analytics />
               </ProtectedRoute>
             }
@@ -127,7 +127,7 @@ export function MainLayout() {
           <Route
             path="/locations"
             element={
-              <ProtectedRoute allowedRoles={["admin"]}>
+              <ProtectedRoute allowedRoles={["admin", "customer_support"]}>
                 <Locations />
               </ProtectedRoute>
             }

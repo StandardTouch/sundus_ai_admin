@@ -29,7 +29,7 @@ export default function Sidebar({ isOpen, onClose, currentPage }: SidebarProps) 
     if (user?.role === "customer_support") {
       // Customer support only sees FAQs and FAQ Suggestions
       return sidebarItems.filter(
-        (item) => item.label === "FAQs" || item.label === "FAQ Suggestions"
+        (item) => item.label === "FAQs" || item.label === "FAQ Suggestions" || item.label === "Conversations" || item.label === "Locations" || item.label === "Analytics"
       );
     }
     // Admin sees all items

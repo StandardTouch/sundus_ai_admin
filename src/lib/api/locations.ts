@@ -27,8 +27,8 @@ export interface CreateLocationDto {
   isActive?: boolean;
 }
 
-export const fetchLocations = async () => {
-  const response = await apiClient.get("/api/locations");
+export const fetchLocations = async (params?: { search?: string; isActive?: boolean }) => {
+  const response = await apiClient.get("/api/locations", { params });
   return response.data;
 };
 
