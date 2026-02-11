@@ -17,11 +17,7 @@ import {
 import { showError } from "@/lib/utils/toast";
 import type { DashboardData } from "@/lib/api/dashboard";
 
-interface DashboardProps {
-  onMenuClick: () => void;
-}
-
-export default function Dashboard({ onMenuClick }: DashboardProps) {
+export default function Dashboard() {
   const [dashboardData, setDashboardData] = useState<DashboardData | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
@@ -51,14 +47,14 @@ export default function Dashboard({ onMenuClick }: DashboardProps) {
           request: err.request,
           config: err.config,
         });
-        
+
         let errorMessage = "Failed to load dashboard data";
-        
+
         if (err.response) {
           // Server responded with error status
           const status = err.response.status;
           console.error(`API Error Status: ${status}`, err.response.data);
-          
+
           if (status === 500) {
             errorMessage = "Server error. Please try again later or contact support.";
           } else if (status === 401) {
@@ -79,7 +75,7 @@ export default function Dashboard({ onMenuClick }: DashboardProps) {
           console.error("Request setup error:", err.message);
           errorMessage = err.message || "An unexpected error occurred";
         }
-        
+
         setError(errorMessage);
         showError(errorMessage);
       } finally {
@@ -93,7 +89,7 @@ export default function Dashboard({ onMenuClick }: DashboardProps) {
   if (isLoading) {
     return (
       <main className="flex-1 p-4 sm:p-6 overflow-y-auto w-full lg:w-auto bg-[var(--admin-bg)] text-[var(--admin-text)]">
-        <DashboardHeader onMenuClick={onMenuClick} onSettingsClick={() => setIsSettingsModalOpen(true)} />
+        <DashboardHeader onSettingsClick={() => setIsSettingsModalOpen(true)} />
         <DashboardSkeleton />
         <SettingsModal isOpen={isSettingsModalOpen} onClose={() => setIsSettingsModalOpen(false)} />
       </main>
@@ -103,7 +99,7 @@ export default function Dashboard({ onMenuClick }: DashboardProps) {
   if (error || !dashboardData) {
     return (
       <main className="flex-1 p-4 sm:p-6 overflow-y-auto w-full lg:w-auto bg-[var(--admin-bg)] text-[var(--admin-text)]">
-        <DashboardHeader onMenuClick={onMenuClick} onSettingsClick={() => setIsSettingsModalOpen(true)} />
+        <DashboardHeader onSettingsClick={() => setIsSettingsModalOpen(true)} />
         <div className="flex items-center justify-center h-64">
           <div className="text-center max-w-md">
             <p className="text-lg font-semibold text-[var(--admin-text)] mb-2">
@@ -134,13 +130,13 @@ export default function Dashboard({ onMenuClick }: DashboardProps) {
                     request: err.request,
                     config: err.config,
                   });
-                  
+
                   let errorMessage = "Failed to load dashboard data";
-                  
+
                   if (err.response) {
                     const status = err.response.status;
                     console.error(`API Error Status (Retry): ${status}`, err.response.data);
-                    
+
                     if (status === 500) {
                       errorMessage = "Server error. Please try again later or contact support.";
                     } else {
@@ -153,7 +149,7 @@ export default function Dashboard({ onMenuClick }: DashboardProps) {
                     console.error("Request setup error (Retry):", err.message);
                     errorMessage = err.message || "An unexpected error occurred";
                   }
-                  
+
                   setError(errorMessage);
                   showError(errorMessage);
                 } finally {
@@ -178,7 +174,7 @@ export default function Dashboard({ onMenuClick }: DashboardProps) {
 
   return (
     <main className="flex-1 p-4 sm:p-6 overflow-y-auto w-full lg:w-auto bg-[var(--admin-bg)] text-[var(--admin-text)]">
-      <DashboardHeader onMenuClick={onMenuClick} onSettingsClick={() => setIsSettingsModalOpen(true)} />
+      <DashboardHeader onSettingsClick={() => setIsSettingsModalOpen(true)} />
 
       {/* OpenAI Credit Status Banner */}
       <OpenAICreditBanner />

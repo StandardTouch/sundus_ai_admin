@@ -14,6 +14,7 @@ import { Settings } from "@/modules/settings";
 import { Locations } from "@/modules/locations";
 import { MobileMenuOverlay } from "@/components/layout";
 import { useAppSelector } from "@/store/hooks";
+import { Menu } from "lucide-react";
 
 type Page = "dashboard" | "conversations" | "analytics" | "users" | "faqs" | "suggestions" | "settings" | "locations";
 
@@ -57,82 +58,96 @@ export function MainLayout() {
         onClose={handleMenuClose}
         currentPage={currentPage}
       />
-      <div className="flex-1 lg:ml-64">
-        <Routes>
-          <Route path="/" element={<Navigate to={defaultPath} replace />} />
-          <Route
-            path="/dashboard"
-            element={
-              <ProtectedRoute allowedRoles={["admin"]}>
-                <Dashboard onMenuClick={handleMenuToggle} />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/conversations"
-            element={
-              <ProtectedRoute allowedRoles={["admin", "customer_support"]}>
-                <Conversations />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/conversations/:id"
-            element={
-              <ProtectedRoute allowedRoles={["admin", "customer_support"]}>
-                <ConversationDetail />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/analytics"
-            element={
-              <ProtectedRoute allowedRoles={["admin", "customer_support"]}>
-                <Analytics />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/users"
-            element={
-              <ProtectedRoute allowedRoles={["admin"]}>
-                <Users />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/faqs"
-            element={
-              <ProtectedRoute allowedRoles={["admin", "customer_support"]}>
-                <Faqs />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/suggestions"
-            element={
-              <ProtectedRoute allowedRoles={["admin", "customer_support"]}>
-                <Suggestions />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/settings"
-            element={
-              <ProtectedRoute allowedRoles={["admin"]}>
-                <Settings />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/locations"
-            element={
-              <ProtectedRoute allowedRoles={["admin", "customer_support"]}>
-                <Locations />
-              </ProtectedRoute>
-            }
-          />
-        </Routes>
+      <div className="flex-1 lg:ml-64 flex flex-col min-h-screen">
+        <div className="lg:hidden p-4 border-b border-[var(--admin-border)] flex items-center gap-3 bg-[var(--admin-bg-secondary)] sticky top-0 z-40">
+          <button
+            onClick={handleMenuToggle}
+            className="p-2 -ml-2 text-[var(--admin-text-muted)] hover:text-[var(--admin-text)]"
+            aria-label="Open sidebar"
+          >
+            <Menu className="w-6 h-6" />
+          </button>
+          <span className="font-semibold text-lg text-[var(--admin-text)] capitalize">
+            {currentPage === "dashboard" ? "Dashboard" : currentPage}
+          </span>
+        </div>
+        <div className="flex-1 flex flex-col overflow-hidden">
+          <Routes>
+            <Route path="/" element={<Navigate to={defaultPath} replace />} />
+            <Route
+              path="/dashboard"
+              element={
+                <ProtectedRoute allowedRoles={["admin"]}>
+                  <Dashboard />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/conversations"
+              element={
+                <ProtectedRoute allowedRoles={["admin", "customer_support"]}>
+                  <Conversations />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/conversations/:id"
+              element={
+                <ProtectedRoute allowedRoles={["admin", "customer_support"]}>
+                  <ConversationDetail />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/analytics"
+              element={
+                <ProtectedRoute allowedRoles={["admin", "customer_support"]}>
+                  <Analytics />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/users"
+              element={
+                <ProtectedRoute allowedRoles={["admin"]}>
+                  <Users />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/faqs"
+              element={
+                <ProtectedRoute allowedRoles={["admin", "customer_support"]}>
+                  <Faqs />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/suggestions"
+              element={
+                <ProtectedRoute allowedRoles={["admin", "customer_support"]}>
+                  <Suggestions />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/settings"
+              element={
+                <ProtectedRoute allowedRoles={["admin"]}>
+                  <Settings />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/locations"
+              element={
+                <ProtectedRoute allowedRoles={["admin", "customer_support"]}>
+                  <Locations />
+                </ProtectedRoute>
+              }
+            />
+          </Routes>
+        </div>
       </div>
     </div>
   );

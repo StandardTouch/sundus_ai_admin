@@ -111,25 +111,27 @@ export default function LocationsPage() {
                             Manage and view your business locations on the map
                         </p>
                     </div>
-                    <button
-                        onClick={() => setIsModalOpen(true)}
-                        className="w-full sm:w-auto px-4 py-2.5 bg-[var(--admin-primary)] text-white rounded-lg hover:opacity-90 transition-opacity font-medium flex items-center justify-center gap-2"
-                    >
-                        <Plus className="w-5 h-5" />
-                        <span>Add Location</span>
-                    </button>
                 </div>
 
-                <div className="flex flex-col sm:flex-row gap-4 mb-6">
-                    <div className="relative flex-1">
-                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-[var(--admin-text-muted)]" />
-                        <input
-                            type="text"
-                            placeholder="Search locations..."
-                            value={searchQuery}
-                            onChange={(e) => setSearchQuery(e.target.value)}
-                            className="w-full pl-10 pr-4 py-2.5 bg-[var(--admin-bg)] border border-[var(--admin-border)] rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--admin-primary)] text-[var(--admin-text)]"
-                        />
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+                    <div className="flex-1 flex flex-col sm:flex-row gap-4 items-center justify-between">
+                        <div className="relative flex-1 w-full sm:w-auto">
+                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-[var(--admin-text-muted)]" />
+                            <input
+                                type="text"
+                                placeholder="Search locations..."
+                                value={searchQuery}
+                                onChange={(e) => setSearchQuery(e.target.value)}
+                                className="w-full pl-10 pr-4 py-2.5 bg-[var(--admin-bg)] border border-[var(--admin-border)] rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--admin-primary)] text-[var(--admin-text)]"
+                            />
+                        </div>
+                        <button
+                            onClick={() => setIsModalOpen(true)}
+                            className="w-full sm:w-auto px-4 py-2.5 bg-[var(--admin-primary)] text-white rounded-lg hover:opacity-90 transition-opacity font-medium flex items-center justify-center gap-2"
+                        >
+                            <Plus className="w-5 h-5" />
+                            <span>Add Location</span>
+                        </button>
                     </div>
 
                     <div className="relative">
