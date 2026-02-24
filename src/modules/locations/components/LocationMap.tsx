@@ -1,5 +1,5 @@
 import { GoogleMap, Marker, useJsApiLoader, Autocomplete } from "@react-google-maps/api";
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 const LIBRARIES: ("places" | "drawing" | "geometry" | "visualization")[] = ["places"];
 
@@ -8,17 +8,20 @@ const containerStyle = {
     height: "400px",
 };
 
-const center = {
+const defaultCenter = {
     lat: 24.7136,
     lng: 46.6753, // Riyadh
 };
 
 interface LocationMapProps {
-    onLocationSelect: (lat: number, lng: number, address?: string) => void;
+    onLocationSelect: (lat: number, lng: number, address?: string, metadata?: { countryCode?: string, stateCode?: string, stateName?: string, cityName?: string }) => void;
     selectedLocation: { lat: number; lng: number } | null;
+    countryCode?: string;
+    stateCode?: string;
+    cityName?: string;
 }
 
-export default function LocationMap({ onLocationSelect, selectedLocation }: LocationMapProps) {
+export default function LocationMap({ onLocationSelect, selectedLocation, countryCode, stateCode, cityName }: LocationMapProps) {
     const { isLoaded } = useJsApiLoader({
         id: "google-map-script",
         googleMapsApiKey: import.meta.env.VITE_GOOGLE_MAPS_API_KEY || "",
@@ -27,6 +30,43 @@ export default function LocationMap({ onLocationSelect, selectedLocation }: Loca
 
     const [map, setMap] = useState<google.maps.Map | null>(null);
     const [autocomplete, setAutocomplete] = useState<google.maps.places.Autocomplete | null>(null);
+
+    useEffect(() => {
+        if (isLoaded && map && (countryCode || stateCode || cityName)) {
+            const geocoder = new google.maps.Geocoder();
+            const address = [cityName, stateCode, countryCode].filter(Boolean).join(", ");
+
+            geocoder.geocode({ address }, (results, status) => {
+                if (status === "OK" && results && results[0]) {
+                    const { lat, lng } = results[0].geometry.location.toJSON();
+                    map.panTo({ lat, lng });
+                    map.setZoom(12);
+                }
+            });
+        }
+    }, [isLoaded, map, countryCode, stateCode, cityName]);
+
+    const extractMetadata = (components: google.maps.GeocoderAddressComponent[]) => {
+        let countryCode = "";
+        let stateCode = "";
+        let stateName = "";
+        let cityName = "";
+
+        components.forEach(component => {
+            if (component.types.includes("country")) {
+                countryCode = component.short_name;
+            }
+            if (component.types.includes("administrative_area_level_1")) {
+                stateCode = component.short_name;
+                stateName = component.long_name;
+            }
+            if (component.types.includes("locality") || component.types.includes("sublocality") || component.types.includes("city")) {
+                cityName = component.long_name;
+            }
+        });
+
+        return { countryCode, stateCode, stateName, cityName };
+    };
 
     const onLoad = useCallback(function callback(map: google.maps.Map) {
         setMap(map);
@@ -46,7 +86,8 @@ export default function LocationMap({ onLocationSelect, selectedLocation }: Loca
                     map.panTo({ lat, lng });
                     map.setZoom(15);
                 }
-                onLocationSelect(lat, lng, place.formatted_address);
+                const metadata = place.address_components ? extractMetadata(place.address_components) : undefined;
+                onLocationSelect(lat, lng, place.formatted_address, metadata);
             }
         }
     };
@@ -60,7 +101,8 @@ export default function LocationMap({ onLocationSelect, selectedLocation }: Loca
             const geocoder = new google.maps.Geocoder();
             geocoder.geocode({ location: { lat, lng } }, (results, status) => {
                 if (status === "OK" && results && results[0]) {
-                    onLocationSelect(lat, lng, results[0].formatted_address);
+                    const metadata = results[0].address_components ? extractMetadata(results[0].address_components) : undefined;
+                    onLocationSelect(lat, lng, results[0].formatted_address, metadata);
                 } else {
                     onLocationSelect(lat, lng);
                 }
@@ -85,6 +127,9 @@ export default function LocationMap({ onLocationSelect, selectedLocation }: Loca
             <Autocomplete
                 onLoad={(auto) => setAutocomplete(auto)}
                 onPlaceChanged={onPlaceChanged}
+                options={{
+                    componentRestrictions: countryCode ? { country: countryCode.toLowerCase() } : undefined,
+                }}
             >
                 <div className="absolute left-4 top-4 z-20 w-[calc(100%-32px)] sm:w-80">
                     <input
@@ -97,7 +142,7 @@ export default function LocationMap({ onLocationSelect, selectedLocation }: Loca
             </Autocomplete>
             <GoogleMap
                 mapContainerStyle={containerStyle}
-                center={selectedLocation || center}
+                center={selectedLocation || defaultCenter}
                 zoom={12}
                 onLoad={onLoad}
                 onUnmount={onUnmount}
