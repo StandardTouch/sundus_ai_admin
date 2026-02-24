@@ -1,5 +1,16 @@
 import apiClient from "./axios";
 
+export interface Shift {
+  open: string;
+  close: string;
+}
+
+export interface StoreTiming {
+  day: string;
+  shifts: Shift[];
+  isClosed: boolean;
+}
+
 export interface Location {
   id?: string;
   _id: string;
@@ -10,6 +21,13 @@ export interface Location {
   location_address_ara: string;
   location_latitude: string;
   location_longitude: string;
+  country: string;
+  state: string;
+  city: string;
+  timings?: StoreTiming[];
+  store_manager_name?: string;
+  store_manager_phone?: string;
+  store_contact_phone?: string;
   location_animation: string;
   isActive: boolean;
   created_at: string;
@@ -23,6 +41,13 @@ export interface CreateLocationDto {
   location_address_ara?: string;
   location_latitude: string;
   location_longitude: string;
+  country: string;
+  state: string;
+  city: string;
+  timings?: StoreTiming[];
+  store_manager_name?: string;
+  store_manager_phone?: string;
+  store_contact_phone?: string;
   location_animation?: string;
   isActive?: boolean;
 }
