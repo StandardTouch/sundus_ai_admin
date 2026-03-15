@@ -102,8 +102,19 @@ export default function AddLocationModal({ isOpen, onClose, onSuccess, initialDa
                 lat: parseFloat(initialData.location_latitude),
                 lng: parseFloat(initialData.location_longitude)
             });
-            setSelectedCountry(initialData.country || "");
-            setSelectedState(initialData.state || "");
+            
+            // Map country name back to code if necessary
+        
+
+            // Map state name back to code if necessary
+            if (countryCode) {
+                const states = State.getStatesOfCountry(countryCode);
+                const stateMatch = states.find(s => s.name === initialData.state || s.isoCode === initialData.state);
+                setSelectedState(stateMatch?.isoCode || "");
+            } else {
+                setSelectedState("");
+            }
+
             setSelectedCity(initialData.city || "");
             setManagerName(initialData.store_manager_name || "");
             setManagerContact(initialData.store_manager_phone || "");
@@ -139,8 +150,8 @@ export default function AddLocationModal({ isOpen, onClose, onSuccess, initialDa
                 location_address_ara: addressAra,
                 location_latitude: coords.lat.toString(),
                 location_longitude: coords.lng.toString(),
-                country: selectedCountry,
-                state: selectedState,
+                country: Country.getCountryByCode(selectedCountry)?.name || selectedCountry,
+                state: State.getStateByCodeAndCountry(selectedState, selectedCountry)?.name || selectedState,
                 city: selectedCity,
                 store_manager_name: managerName,
                 store_manager_phone: managerContact,

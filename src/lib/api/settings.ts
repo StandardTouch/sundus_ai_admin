@@ -223,6 +223,25 @@ export async function getOpenAICreditStatus(): Promise<GetOpenAICreditStatusResp
 }
 
 /**
+ * POST /api/settings/openai-credit-status/reset
+ * Reset OpenAI credit availability status
+ * 
+ * Headers:
+ * Authorization: Bearer <token> (admin or customer_support)
+ */
+export interface ResetOpenAICreditStatusResponse {
+  success: boolean;
+  message: string;
+}
+
+export async function resetOpenAICreditStatus(): Promise<ResetOpenAICreditStatusResponse> {
+  const response = await apiClient.post<ResetOpenAICreditStatusResponse>(
+    "/api/settings/openai-credit-status/reset"
+  );
+  return response.data;
+}
+
+/**
  * POST /api/whatsapp/send
  * Send WhatsApp message via api.whatsapp
  * 
