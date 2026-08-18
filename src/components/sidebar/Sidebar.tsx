@@ -7,7 +7,7 @@ import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { logoutUser } from "@/modules/auth/store";
 import { showSuccess } from "@/lib/utils/toast";
 
-type Page = "dashboard" | "conversations" | "analytics" | "users" | "faqs" | "suggestions" | "settings" | "locations";
+type Page = "dashboard" | "conversations" | "analytics" | "users" | "faqs" | "suggestions" | "settings" | "locations" | "SkuManagement";
 
 interface SidebarProps {
   isOpen: boolean;
@@ -29,7 +29,7 @@ export default function Sidebar({ isOpen, onClose, currentPage }: SidebarProps) 
     if (user?.role === "customer_support") {
       // Customer support only sees FAQs and FAQ Suggestions
       return sidebarItems.filter(
-        (item) => item.label === "FAQs" || item.label === "FAQ Suggestions" || item.label === "Conversations" || item.label === "Locations" || item.label === "Analytics"
+        (item) => item.label === "FAQs" || item.label === "FAQ Suggestions" || item.label === "Conversations" || item.label === "Locations" || item.label === "Analytics" || item.label === "SKU Management" || item.label === "SkuManagement"
       );
     }
     // Admin sees all items
@@ -78,6 +78,8 @@ export default function Sidebar({ isOpen, onClose, currentPage }: SidebarProps) 
                 "FAQ Suggestions": "suggestions",
                 "Settings": "settings",
                 "Locations": "locations",
+                "SKU Management": "SkuManagement",
+                "SkuManagement": "SkuManagement",
               };
               const itemPage = pageMap[item.label] as Page;
               const path = item.path || "/";

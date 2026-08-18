@@ -21,7 +21,7 @@ export default function ModuleSearch() {
   const getAvailableModules = (): ModuleOption[] => {
     if (user?.role === "customer_support") {
       return sidebarItems
-        .filter((item) => item.label === "FAQs" || item.label === "FAQ Suggestions")
+        .filter((item) => item.label === "FAQs" || item.label === "FAQ Suggestions" || item.label === "Conversations" || item.label === "Locations" || item.label === "Analytics" || item.label === "SKU Management" || item.label === "SkuManagement")
         .map((item) => ({
           label: item.label,
           path: item.path || "/",

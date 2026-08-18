@@ -12,11 +12,12 @@ import { Faqs } from "@/modules/faqs";
 import { Suggestions } from "@/modules/faqSuggestions";
 import { Settings } from "@/modules/settings";
 import { Locations } from "@/modules/locations";
+import { SkuManagement } from "@/modules/skuManagement";
 import { MobileMenuOverlay } from "@/components/layout";
 import { useAppSelector } from "@/store/hooks";
 import { Menu } from "lucide-react";
 
-type Page = "dashboard" | "conversations" | "analytics" | "users" | "faqs" | "suggestions" | "settings" | "locations";
+type Page = "dashboard" | "conversations" | "analytics" | "users" | "faqs" | "suggestions" | "settings" | "locations" | "SkuManagement";
 
 export function MainLayout() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -42,6 +43,7 @@ export function MainLayout() {
     if (path === "/suggestions") return "suggestions";
     if (path === "/settings") return "settings";
     if (path === "/locations") return "locations";
+    if (path === "/sku-management") return "SkuManagement";
     return "dashboard";
   };
 
@@ -68,7 +70,7 @@ export function MainLayout() {
             <Menu className="w-6 h-6" />
           </button>
           <span className="font-semibold text-lg text-[var(--admin-text)] capitalize">
-            {currentPage === "dashboard" ? "Dashboard" : currentPage}
+            {currentPage === "dashboard" ? "Dashboard" : currentPage === "SkuManagement" ? "SKU Management" : currentPage}
           </span>
         </div>
         <div className="flex-1 flex flex-col overflow-hidden">
@@ -143,6 +145,14 @@ export function MainLayout() {
               element={
                 <ProtectedRoute allowedRoles={["admin", "customer_support"]}>
                   <Locations />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/sku-management"
+              element={
+                <ProtectedRoute allowedRoles={["admin", "customer_support"]}>
+                  <SkuManagement />
                 </ProtectedRoute>
               }
             />
