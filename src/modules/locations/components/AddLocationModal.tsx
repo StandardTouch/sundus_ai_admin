@@ -102,15 +102,29 @@ export default function AddLocationModal({ isOpen, onClose, onSuccess, initialDa
                 lat: parseFloat(initialData.location_latitude),
                 lng: parseFloat(initialData.location_longitude)
             });
-            
+
             // Map country name back to code if necessary
-        
+            let cCode = "";
+            if (initialData.country) {
+                const countries = Country.getAllCountries();
+                const matchedCountry = countries.find(c => 
+                    c.name.toLowerCase() === initialData.country.toLowerCase() || 
+                    c.isoCode.toLowerCase() === initialData.country.toLowerCase()
+                );
+                cCode = matchedCountry ? matchedCountry.isoCode : initialData.country;
+                setSelectedCountry(cCode);
+            } else {
+                setSelectedCountry("");
+            }
 
             // Map state name back to code if necessary
-            if (countryCode) {
-                const states = State.getStatesOfCountry(countryCode);
-                const stateMatch = states.find(s => s.name === initialData.state || s.isoCode === initialData.state);
-                setSelectedState(stateMatch?.isoCode || "");
+            if (cCode && initialData.state) {
+                const states = State.getStatesOfCountry(cCode);
+                const stateMatch = states.find(s => 
+                    s.name.toLowerCase() === initialData.state.toLowerCase() || 
+                    s.isoCode.toLowerCase() === initialData.state.toLowerCase()
+                );
+                setSelectedState(stateMatch?.isoCode || initialData.state);
             } else {
                 setSelectedState("");
             }
@@ -190,8 +204,9 @@ export default function AddLocationModal({ isOpen, onClose, onSuccess, initialDa
 
     return (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
-            <div className="bg-[var(--admin-bg-secondary)] border border-[var(--admin-border)] rounded-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto shadow-2xl">
-                <div className="p-6 border-b border-[var(--admin-border)] flex items-center justify-between">
+            <div className="bg-[var(--admin-bg-secondary)] border border-[var(--admin-border)] rounded-xl w-full max-w-2xl max-h-[90vh] flex flex-col shadow-2xl overflow-hidden">
+                {/* Fixed Header */}
+                <div className="px-6 py-4 border-b border-[var(--admin-border)] flex items-center justify-between shrink-0 bg-[var(--admin-bg-secondary)]">
                     <h2 className="text-xl font-bold text-[var(--admin-text)]">
                         {initialData ? "Edit Location" : "Add New Location"}
                     </h2>
@@ -199,11 +214,12 @@ export default function AddLocationModal({ isOpen, onClose, onSuccess, initialDa
                         onClick={onClose}
                         className="p-2 hover:bg-[var(--admin-border)] rounded-lg transition-colors"
                     >
-                        <X className="w-6 h-6 text-[var(--admin-text-muted)]" />
+                        <X className="w-5 h-5 text-[var(--admin-text-muted)]" />
                     </button>
                 </div>
 
-                <form onSubmit={handleSubmit} className="p-6 space-y-6">
+                {/* Scrollable Form Body */}
+                <form id="location-form" onSubmit={handleSubmit} className="p-6 space-y-6 overflow-y-auto flex-1">
                     <div className="space-y-4">
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             <div>
@@ -503,31 +519,33 @@ export default function AddLocationModal({ isOpen, onClose, onSuccess, initialDa
                             </div>
                         </div>
                     </div>
-
-                    <div className="flex gap-4 pt-4">
-                        <button
-                            type="button"
-                            onClick={onClose}
-                            className="flex-1 px-4 py-2.5 border border-[var(--admin-border)] text-[var(--admin-text)] rounded-lg hover:bg-[var(--admin-border)] transition-colors font-medium"
-                        >
-                            Cancel
-                        </button>
-                        <button
-                            type="submit"
-                            disabled={!name || !address || !coords || !selectedCountry || !selectedState || !selectedCity || isSubmitting}
-                            className="flex-1 px-4 py-2.5 bg-[var(--admin-primary)] text-white rounded-lg hover:opacity-90 transition-opacity font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-                        >
-                            {isSubmitting ? (
-                                <>
-                                    <Loader2 className="w-5 h-5 animate-spin" />
-                                    <span>{initialData ? "Updating..." : "Saving..."}</span>
-                                </>
-                            ) : (
-                                initialData ? "Update Location" : "Save Location"
-                            )}
-                        </button>
-                    </div>
                 </form>
+
+                {/* Fixed Footer */}
+                <div className="px-6 py-4 border-t border-[var(--admin-border)] flex gap-4 shrink-0 bg-[var(--admin-bg-secondary)]">
+                    <button
+                        type="button"
+                        onClick={onClose}
+                        className="flex-1 px-4 py-2.5 border border-[var(--admin-border)] text-[var(--admin-text)] rounded-lg hover:bg-[var(--admin-border)] transition-colors font-medium"
+                    >
+                        Cancel
+                    </button>
+                    <button
+                        type="submit"
+                        form="location-form"
+                        disabled={!name || !address || !coords || !selectedCountry || !selectedState || !selectedCity || isSubmitting}
+                        className="flex-1 px-4 py-2.5 bg-[var(--admin-primary)] text-white rounded-lg hover:opacity-90 transition-opacity font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                    >
+                        {isSubmitting ? (
+                            <>
+                                <Loader2 className="w-5 h-5 animate-spin" />
+                                <span>{initialData ? "Updating..." : "Saving..."}</span>
+                            </>
+                        ) : (
+                            initialData ? "Update Location" : "Save Location"
+                        )}
+                    </button>
+                </div>
             </div>
         </div>
     );
