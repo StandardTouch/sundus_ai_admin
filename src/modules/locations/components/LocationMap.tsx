@@ -52,7 +52,7 @@ export default function LocationMap({ onLocationSelect, selectedLocation, countr
 
     const inputRef = useRef<HTMLInputElement>(null);
     const dropdownRef = useRef<HTMLDivElement>(null);
-    const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
+    const debounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
     // Track internal updates so dropdown changes outside don't override clicked pin
     const isInternalUpdate = useRef(false);

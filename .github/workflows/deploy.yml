@@ -85,7 +85,8 @@ jobs:
             elif [ "$BUILD_STATUS" = "FAILURE" ] || [ "$BUILD_STATUS" = "CANCELLED" ] || [ "$BUILD_STATUS" = "EXPIRED" ]; then
               echo "ERROR: Build failed with status: $BUILD_STATUS"
               echo "Build URL: https://console.cloud.google.com/cloud-build/builds/$BUILD_ID?project=${PROJECT_ID}"
-              echo "Please check the build logs in the GCP Console for details."
+              echo "Fetching build logs:"
+              gcloud builds log "$BUILD_ID" || true
               exit 1
             elif [ "$BUILD_STATUS" != "UNKNOWN" ] && [ -n "$BUILD_STATUS" ]; then
               # Show status every 60 seconds
