@@ -43,8 +43,6 @@ key.json
 
 # CI/CD
 .github
-.dockerignore
-Dockerfile
 
 # Testing
 coverage
